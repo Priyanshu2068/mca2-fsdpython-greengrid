@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'ingestion',
     'analytics',
     'dashboard',
+    'billing',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
