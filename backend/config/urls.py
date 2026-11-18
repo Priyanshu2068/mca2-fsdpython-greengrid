@@ -22,4 +22,5 @@ urlpatterns = [
     # API v1 routes
     path('api/v1/', include('core.urls')),
     path('api/v1/accounts/', include('accounts.urls')),
+    path('api/v1/facilities/', include('facilities.urls')),
 ]
