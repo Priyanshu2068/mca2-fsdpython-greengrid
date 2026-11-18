@@ -8,12 +8,35 @@ from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import Http404
-from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
+from django.core.exceptions import (
+    PermissionDenied as DjangoPermissionDenied,
+    ValidationError as DjangoValidationError,
+)
 
 def custom_exception_handler(exc, context):
     """
     Transforms any DRF or Django exception into the standardized error format.
     """
+    # Convert Django's core ValidationError to DRF's format
+    if isinstance(exc, DjangoValidationError):
+        if hasattr(exc, 'message_dict'):
+            details = exc.message_dict
+        elif hasattr(exc, 'messages'):
+            details = exc.messages
+        else:
+            details = str(exc)
+        return Response(
+            {
+                'error': {
+                    'status': status.HTTP_400_BAD_REQUEST,
+                    'code': 'VALIDATION_ERROR',
+                    'message': 'Validation failed.',
+                    'details': details,
+                }
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     response = exception_handler(exc, context)
 
     # Standard status code to error code mapping
