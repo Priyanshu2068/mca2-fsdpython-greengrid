@@ -45,7 +45,10 @@ INSTALLED_APPS = [
 
     # GreenGrid Modular Monolith Apps
     'core',
+    'accounts',
 ]
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
