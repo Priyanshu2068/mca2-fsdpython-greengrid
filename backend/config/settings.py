@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'facilities',
     'ingestion',
     'analytics',
+    'dashboard',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
