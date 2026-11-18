@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # GreenGrid Modular Monolith Apps
     'core',
     'accounts',
+    'facilities',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
