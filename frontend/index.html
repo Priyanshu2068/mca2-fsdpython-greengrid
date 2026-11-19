@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GreenGrid</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f8a4c'/%3E%3Cpath d='M18 4 8 18h7l-1 10 10-14h-7z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="login" class="login hidden">
+  <form id="login-form" class="login-card" autocomplete="on">
+    <div class="brand big"><span class="logo"></span><span>GreenGrid</span></div>
+    <p class="muted">Energy management for commercial facilities</p>
+    <label>Email<input name="email" type="email" required autocomplete="username" value="admin@greengrid.test"></label>
+    <label>Password<input name="password" type="password" required autocomplete="current-password" value="GreenGrid@123"></label>
+    <div id="login-error" class="form-error" role="alert"></div>
+    <button class="btn primary" type="submit">Sign in</button>
+    <div style="margin-top: 10px; display: grid; gap: 8px;">
+      <span class="muted small" style="text-align: center;">Demo accounts:</span>
+      <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+        <button type="button" class="btn ghost small demo-btn" data-email="admin@greengrid.test">Admin</button>
+        <button type="button" class="btn ghost small demo-btn" data-email="customer@greengrid.test">Customer</button>
+        <button type="button" class="btn ghost small demo-btn" data-email="engineer@greengrid.test">Field Engineer</button>
+      </div>
+      <p class="hint" style="text-align: center; font-size: 11.5px; margin-top: 4px;">Password for all: <code>GreenGrid@123</code></p>
+    </div>
+  </form>
+</div>
+
+<div id="shell" class="shell hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="logo"></span><span>GreenGrid</span></div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">
+      <div id="whoami" class="who"></div>
+      <button class="btn ghost small" id="logout">Sign out</button>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu" id="menu-btn" aria-label="Toggle navigation">☰</button>
+      <h1 id="page-title">Overview</h1>
+      <div class="spacer"></div>
+      <label class="fac-select">
+        <span class="muted small">Facility</span>
+        <select id="facility"></select>
+      </label>
+      <button class="icon-btn" id="theme-btn" aria-label="Toggle theme" title="Toggle theme">◐</button>
+    </header>
+    <main id="view" class="view" tabindex="-1"></main>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="tip" class="tip hidden"></div>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
