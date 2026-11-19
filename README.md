@@ -34,9 +34,9 @@ This section provides direct navigation to project milestones, design artifacts,
 | Milestone Tag | Phase Scope | Focus Areas | Status |
 | :--- | :--- | :--- | :--- |
 | **`v0.1.0`** | Phase 0 | Architecture, Workflows, ERD, SQL DDL, API Spec, User Stories | Complete |
-| **`v0.2.0`** | Phase 1 | Foundation, Ingestion API, Simulator, Rollups, Anomalies | Upcoming |
-| **`v0.3.0`** | Phase 2 | Analytics Dashboard APIs, Utility Billing Reconciliation, Benchmarks | Upcoming |
-| **`v1.0.0`** | Phase 3 | Recommendation Engine (ECMs), Renewables & Grid, Final Release | Upcoming |
+| **`v0.2.0`** | Phase 1 | Foundation, Ingestion API, Weather Simulator, Rollups, Anomalies | Complete |
+| **`v0.3.0`** | Phase 2 | Executive Dashboard APIs, Utility Billing & Reconciliation, BEE Benchmarks | Complete |
+| **`v1.0.0`** | Phase 3 | Recommendation Engine (ECMs), Renewables, Grid Outages & Carbon, Final Release | Complete |
 
 ### Design Documentation Index
 All foundational engineering documents reside in the `docs/` and `database/` directories:
@@ -50,6 +50,11 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 | **Seed Data Fixtures** | [`database/seed_data.sql`](database/seed_data.sql) | Comprehensive Indian commercial facility dataset (2024–2026) with master records, readings, and edge cases |
 | **REST API Specification** | [`docs/api-spec.md`](docs/api-spec.md) | Comprehensive endpoint catalog covering all 8 modules, payload schemas, and response formats |
 | **Agile Backlog & Stories** | [`docs/user-stories.md`](docs/user-stories.md) | Granular user stories (P02-US01 to P02-US23) with acceptance criteria, priority, and 90-hour work allocation |
+| **Comprehensive Test Report** | [`docs/test-report.md`](docs/test-report.md) | Automated regression test execution report: 52 passing tests (100% pass rate) across all 8 modules |
+| **Phase 0 Review** | [`docs/sprint-0-review.md`](docs/sprint-0-review.md) | Verification and design sign-off for Phase 0 (Tag `v0.1.0`) |
+| **Phase 1 Review** | [`docs/sprint-1-review.md`](docs/sprint-1-review.md) | Verification report for Phase 1 Foundation, Ingestion & Analytics (Tag `v0.2.0`) |
+| **Phase 2 Review** | [`docs/sprint-2-review.md`](docs/sprint-2-review.md) | Verification report for Phase 2 Dashboards, Utility Billing & Benchmarking (Tag `v0.3.0`) |
+| **Phase 3 Review** | [`docs/sprint-3-review.md`](docs/sprint-3-review.md) | Verification report for Phase 3 Recommendations, Renewables & Release (Tag `v1.0.0`) |
 
 ---
 
@@ -107,4 +112,26 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 8. **Execute Test Suite:**
    ```bash
    pytest
+   ```
+
+9. **Run Background Analytics & Intelligence Jobs:**
+   All background jobs run as deterministic, re-runnable Django management commands:
+   ```bash
+   # Recompute incremental 48-hour hourly rollups
+   python manage.py rollup_hourly --hours-back 48
+
+   # Recompute daily rollups with TOD peak/off-peak segregation
+   python manage.py rollup_daily --days-back 30
+
+   # Run automated anomaly detection engine
+   python manage.py detect_anomalies
+
+   # Calculate annual EUI and assign BEE Star Ratings
+   python manage.py compute_benchmarks --year 2025
+
+   # Generate deterministic ECM recommendations with ₹ savings
+   python manage.py generate_recommendations
+
+   # Replay environmental load curves from NASA POWER weather data
+   python manage.py run_simulator --days 7
    ```
