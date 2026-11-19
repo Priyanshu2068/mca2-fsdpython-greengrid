@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Initialize environment variables
 env = environ.Env(
-    DEBUG=(bool, False),
+    DEBUG=(bool, True),
     SECRET_KEY=(str, 'django-insecure-greengrid-dev-key-change-in-production-1234567890'),
     ALLOWED_HOSTS=(list, ['*']),
     INGESTION_MAX_BATCH_SIZE=(int, 5000),

@@ -534,6 +534,20 @@
   }
   async function boot() {
     initTheme();
+    if (window.location.protocol === 'file:') {
+      const err = $('#login-error');
+      if (err) {
+        err.innerHTML = '⚠️ <b>Direct file opening detected.</b><br>GreenGrid requires the Django backend server to run.<br>Execute: <code>.\\venv\\Scripts\\python.exe manage.py runserver</code><br>Then open: <a href="http://127.0.0.1:8000/app/" target="_blank">http://127.0.0.1:8000/app/</a>';
+      }
+      showLogin();
+      return;
+    }
+    if (window.location.port && window.location.port !== '8000') {
+      const err = $('#login-error');
+      if (err) {
+        err.innerHTML = `ℹ️ Running on port ${window.location.port}. Please access the app through Django at <a href="http://127.0.0.1:8000/app/">http://127.0.0.1:8000/app/</a>.`;
+      }
+    }
     document.querySelectorAll('.demo-btn').forEach(btn => {
       btn.onclick = () => {
         const form = $('#login-form');
