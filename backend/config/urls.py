@@ -29,4 +29,5 @@ urlpatterns = [
     path('api/v1/billing/', include('billing.urls')),
     path('api/v1/benchmarking/', include('benchmarking.urls')),
     path('api/v1/recommendations/', include('recommendations.urls')),
+    path('api/v1/renewables/', include('renewables.urls')),
 ]
