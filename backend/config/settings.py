@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'dashboard',
     'billing',
     'benchmarking',
+    'recommendations',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'

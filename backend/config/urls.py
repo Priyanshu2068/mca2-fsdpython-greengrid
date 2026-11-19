@@ -28,4 +28,5 @@ urlpatterns = [
     path('api/v1/dashboard/', include('dashboard.urls')),
     path('api/v1/billing/', include('billing.urls')),
     path('api/v1/benchmarking/', include('benchmarking.urls')),
+    path('api/v1/recommendations/', include('recommendations.urls')),
 ]
