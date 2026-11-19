@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'billing',
     'benchmarking',
     'recommendations',
+    'renewables',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
