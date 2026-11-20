@@ -9,14 +9,15 @@
 ## 1. Project Overview
 GreenGrid is a web-based Energy Management Information System (EMIS) tailored for Indian commercial facilities. It collects 15-minute sub-metered energy readings (grid, diesel generators, solar PV, water, gas; categorised by HVAC, lighting, IT, and auxiliary pump loads) and converts high-frequency operational telemetry into actionable analytics, benchmarks, billing audit reconciliation, automated anomaly alerts, and rule-based energy conservation measures (ECMs) with rupee (₹) savings.
 
-Meter hardware is out of scope. Data arrives via a high-throughput idempotent ingestion API supported by synthetic seed fixtures, an automated environmental simulator driven by NASA POWER hourly solar irradiance and temperature data, CSV batch uploads, and manual entry forms.
+Meter hardware is out of scope. Data arrives via a high-throughput idempotent ingestion API supported by synthetic seed fixtures, a built-in load simulator, CSV batch uploads, and manual entry forms.
 
 ---
 
 ## 2. Technical Stack
 - **Language & Runtime:** Python 3.11+
 - **Backend Framework:** Django 4.2 LTS & Django REST Framework (DRF)
-- **Database Engine:** PostgreSQL 16 using `psycopg 3`
+- **Frontend:** React 18 single-page app built with Vite (`frontend/`), talking to the REST API with same-origin session + CSRF auth
+- **Database Engine:** PostgreSQL 16 using `psycopg 3`. Used in place of the MySQL suggested in the project brief, because ingestion, scheduled rollups and dashboards run concurrently, the data model relies on strict unique and foreign-key constraints, and the readings table is append-only time-series data that suits PostgreSQL's aggregation functions and BRIN indexes
 - **Query & Storage Optimisation:** `ON CONFLICT` upserts, `date_trunc` aggregate rollups, BRIN indices on reading timestamps
 - **API Documentation & Filtering:** `drf-spectacular` (OpenAPI 3.0 / Swagger UI at `/api/docs/`), `django-filter`
 - **Authentication & Security:** Django built-in Session Authentication with strict CSRF protection (no JWT) and SHA-256 hashed device API keys (`X-API-Key`)
@@ -26,7 +27,37 @@ Meter hardware is out of scope. Data arrives via a high-throughput idempotent in
 
 ---
 
-## 3. Project Review & Evaluation Directory
+## 3. Web Client (Frontend)
+
+The `frontend/` directory contains a React 18 + Vite single-page application. In production Django serves the built bundle at `/app/`, so the UI and API share one origin and the session cookie and CSRF token work without extra CORS setup.
+
+| Page | Route | What it shows |
+| :--- | :--- | :--- |
+| **Overview** | `#/overview` | Today's consumption, month-to-date, peak demand vs. sanctioned kVA, energy mix, load breakdown, 24-hour / 30-day trends |
+| **Alerts** | `#/alerts` | Anomaly alerts with acknowledge / resolve / false-positive workflow |
+| **Billing** | `#/billing` | Utility bills and bill-vs-metered reconciliation |
+| **Benchmarking** | `#/benchmark` | EUI, BEE star rating, percentile and facility ranking |
+| **Recommendations** | `#/recs` | Energy conservation measures with ₹ savings; accept, dismiss or mark implemented |
+| **Renewables & Carbon** | `#/solar` | Solar generation, self-consumption, emissions by source, grid outages |
+| **Facilities** | `#/sites` | Facilities and meters; admins and field engineers can register meters and upload CSV readings |
+
+Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, responsive layout.
+
+```
+frontend/
+├── index.html
+├── vite.config.js        # base /app/, dev proxy /api -> Django :8000
+└── src/
+    ├── main.jsx, App.jsx # entry, shell, hash routing
+    ├── api.js            # fetch wrapper (session + CSRF)
+    ├── hooks.js          # useAsync, useHashRoute
+    ├── components/       # ui atoms, SVG charts, icons
+    └── pages/            # one component per page above
+```
+
+---
+
+## 4. Project Review & Evaluation Directory
 
 This section provides direct navigation to project milestones, design artifacts, and architectural documentation for academic evaluation.
 
@@ -58,11 +89,12 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 
 ---
 
-## 4. Local Installation & Setup Guide
+## 5. Local Installation & Setup Guide
 
 ### Prerequisites
 - Python 3.11 or higher
 - PostgreSQL 16
+- Node.js 18+ and npm (for the React frontend)
 - Git
 
 ### Setup Steps
@@ -89,32 +121,47 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 4. **Configure Environment Variables:**
    ```bash
    cp .env.example .env
-   # Modify .env with your local PostgreSQL credentials
+   # Modify .env with your local PostgreSQL credentials (DATABASE_URL)
    ```
+   Create the database first: `CREATE USER greengrid_user WITH PASSWORD 'greengrid_password' CREATEDB;` and `CREATE DATABASE greengrid_db OWNER greengrid_user;`.
 
-5. **Initialize Database & Run Migrations:**
+5. **Initialize Database & Run Migrations** (from the repository root):
    ```bash
-   cd backend
    python manage.py migrate
    ```
 
-6. **Seed Initial Master and Telemetry Data:**
+6. **Seed Demo Data** (facilities, meters, readings, bills, benchmarks, recommendations and demo users):
    ```bash
-   psql -U greengrid_user -d greengrid_db -f ../database/seed_data.sql
+   python manage.py seed_demo
+   ```
+   Demo accounts (password `GreenGrid@123`): `admin@greengrid.test`, `customer@greengrid.test`, `engineer@greengrid.test`.
+   Alternatively, load the raw SQL dataset: `psql -U greengrid_user -d greengrid_db -f database/seed_data.sql`.
+
+7. **Build the Web Client:**
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   cd ..
    ```
 
-7. **Run the Development Server:**
+8. **Run the Development Server:**
    ```bash
    python manage.py runserver
    ```
-   Access the interactive Swagger UI documentation at: `http://127.0.0.1:8000/api/docs/`
+   - Web app: `http://127.0.0.1:8000/app/`
+   - Swagger UI: `http://127.0.0.1:8000/api/docs/`
 
-8. **Execute Test Suite:**
+   **Frontend hot-reload (optional):** with Django running on port 8000, run `npm run dev` in `frontend/` and open `http://localhost:5173/app/`. Vite proxies `/api` to Django.
+
+9. **Execute Test Suite:**
    ```bash
+   cd backend
    pytest
    ```
+   With PostgreSQL, the database user needs the `CREATEDB` privilege so pytest can create a temporary test database.
 
-9. **Run Background Analytics & Intelligence Jobs:**
+10. **Run Background Analytics & Intelligence Jobs:**
    All background jobs run as deterministic, re-runnable Django management commands:
    ```bash
    # Recompute incremental 48-hour hourly rollups
@@ -132,6 +179,6 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
    # Generate deterministic ECM recommendations with ₹ savings
    python manage.py generate_recommendations
 
-   # Replay environmental load curves from NASA POWER weather data
-   python manage.py run_simulator --days 7
+   # Generate simulated meter readings for a facility
+   python manage.py run_simulator --facility-id 1 --days 7
    ```
