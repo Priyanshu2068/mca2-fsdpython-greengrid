@@ -83,7 +83,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .icon-btn { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 8px;
   width: 36px; height: 36px; cursor: pointer; font-size: 16px; }
 .icon-btn.menu { display: none; }
-.view { padding: 24px; display: grid; gap: 20px; align-content: start; max-width: 1280px; width: 100%; outline: none; }
+.view { padding: 24px; display: grid; gap: 20px; align-content: start; max-width: 1280px; width: 100%; margin: 0 auto; outline: none; }
 
 /* Components */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
