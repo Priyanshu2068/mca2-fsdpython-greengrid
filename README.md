@@ -27,7 +27,76 @@ Meter hardware is out of scope. Data arrives via a high-throughput idempotent in
 
 ---
 
-## 3. Web Client (Frontend)
+## 3. System Design at a Glance
+
+### 3.1 Architecture
+
+GreenGrid is a modular monolith: one Django project made of nine focused apps on a shared core, with every app split into the same layers.
+
+```mermaid
+flowchart TB
+    C1["React web app<br/>session + CSRF"]
+    C2["Edge gateways<br/>X-API-Key"]
+    C3["CSV uploads<br/>field engineers"]
+    C4["Load simulator<br/>management command"]
+
+    SEC["Security<br/>Auth router, CSRF, rate limit (max 5,000 per batch),<br/>role and facility scoping"]
+
+    APPS["Domain apps<br/>accounts (M8), facilities (M1), ingestion (M1), analytics (M2), dashboard (M3)<br/>benchmarking (M4), billing (M5), recommendations (M6), renewables (M7)"]
+
+    LAYERS["Layers in each app<br/>views (thin), serializers, services (writes), selectors (reads), models"]
+    DB[("Django ORM<br/>PostgreSQL 16")]
+
+    C1 & C2 & C3 & C4 --> SEC --> APPS --> LAYERS --> DB
+```
+
+### 3.2 Data Workflow: From Meter Reading to Rupee Saved
+
+```mermaid
+flowchart LR
+    S1["1. Sources<br/>edge gateways, field CSV,<br/>manual entry, simulator"]
+    S2["2. Ingestion<br/>authenticate, validate (max 5,000),<br/>de-duplicate, persist"]
+    S3["3. Storage<br/>raw_readings<br/>UNIQUE (meter, timestamp)"]
+    S4["4. Scheduled jobs<br/>rollups, anomalies,<br/>benchmarks, recommendations"]
+    S5["5. Intelligence<br/>alerts, bill audit,<br/>EUI star rating, rupee savings"]
+    S6["6. People act<br/>customer, engineer, admin"]
+
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+```
+
+Ingestion is idempotent: sending the same batch twice never double counts, because unique keys and `ignore_conflicts` reject duplicates at the database. Jobs are re-runnable management commands, so there is no message queue to operate.
+
+### 3.3 Database Schema: 24 Tables in 8 Domains
+
+| Domain | Tables |
+| :--- | :--- |
+| Access | `users_customuser`, `accounts_auditlog` |
+| Facilities | `facility`, `building`, `meter`, `datasource`, `user_facility_assignment` |
+| Ingestion | `ingestion_batchlog`, `ingestion_rawreading` |
+| Analytics | `hourly_rollup`, `daily_rollup`, `anomaly_alert` |
+| Benchmarking | `building_benchmark`, `facility_benchmark_score` |
+| Billing | `utility_provider`, `tariff_structure`, `utility_bill`, `bill_reconciliation` |
+| Recommendations | `ecm_rule`, `recommendation` |
+| Renewables | `solar_asset`, `solar_generation_reading`, `grid_event`, `carbon_emission_factor` |
+
+Facility is the root of the model: every query is scoped to the user's assigned facilities. The full ER diagram is in [`docs/er-diagram.md`](docs/er-diagram.md) and the DDL in [`database/schema.sql`](database/schema.sql).
+
+### 3.4 What Makes GreenGrid Different
+
+| Aspect | Typical EMIS tools | GreenGrid |
+| :--- | :--- | :--- |
+| Market focus | Generic, global dashboards | Built for Indian facilities: rupees, kVA demand, power-factor penalties, BEE benchmarks |
+| Data intake | Tied to vendor hardware and gateways | Hardware-agnostic: REST API key, CSV upload, manual entry, simulator |
+| Billing | Shows consumption only | Reconciles the utility bill against metered energy and flags variance above 2.5% |
+| Insight | Charts and threshold alerts | Rule-based energy measures with rupee savings, payback and an accept / dismiss workflow |
+| Operations | Heavy stack of queues and caches | Cron-friendly management commands. No Celery or Redis needed |
+| Data quality | Duplicates cleaned up afterwards | Idempotent ingestion: unique keys in PostgreSQL block duplicates at the source |
+
+"Typical EMIS tools" is a general characterisation of common commercial products, not a benchmark of any specific vendor.
+
+---
+
+## 4. Web Client (Frontend)
 
 The `frontend/` directory contains a React 18 + Vite single-page application. In production Django serves the built bundle at `/app/`, so the UI and API share one origin and the session cookie and CSRF token work without extra CORS setup.
 
@@ -68,7 +137,7 @@ frontend/
 
 ---
 
-## 4. Project Review & Evaluation Directory
+## 5. Project Review & Evaluation Directory
 
 This section provides direct navigation to project milestones, design artifacts, and architectural documentation for academic evaluation.
 
@@ -100,7 +169,7 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 
 ---
 
-## 5. Local Installation & Setup Guide
+## 6. Local Installation & Setup Guide
 
 ### Prerequisites
 - Python 3.11 or higher
