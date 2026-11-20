@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react';
 
 const DJANGO = 'http://127.0.0.1:8000';
 
-// Django serves the production build at /app/ (see backend/config/urls.py).
+// Relative base allows the built React client to work seamlessly on both
+// Vercel root (https://app.vercel.app/) and Django (/app/).
 export default defineConfig({
-  base: '/app/',
+  base: './',
   plugins: [react()],
   server: {
     port: 5173,
