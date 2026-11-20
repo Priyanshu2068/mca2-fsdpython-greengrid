@@ -6,7 +6,7 @@ import { Card, Empty, Kpi, Loader, Pill, Swatch, Table } from '../components/ui.
 import { Donut, LineChart } from '../components/Charts.jsx';
 
 export default function Renewables() {
-  const { fid } = useApp();
+  const { fid, tick } = useApp();
   const res = useAsync(async () => {
     const day = x => x.toISOString().slice(0, 10);
     const rng = { facility_id: fid, start_date: day(new Date(Date.now() - 30 * 864e5)), end_date: day(new Date()) };
@@ -18,7 +18,7 @@ export default function Renewables() {
       api('renewables/solar-assets/?facility_id=' + fid),
     ]);
     return { self, em, gen: list(gen), events: list(ev), assets: list(assets) };
-  }, [fid]);
+  }, [fid, tick]);
 
   return (
     <Loader res={res}>

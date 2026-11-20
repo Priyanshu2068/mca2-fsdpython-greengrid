@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, ensureCsrf, qs, setUnauthorizedHandler } from './api.js';
 import { AppCtx } from './context.js';
-import { useHashRoute } from './hooks.js';
+import { useHashRoute, useLiveTick } from './hooks.js';
 import { list, store, title } from './format.js';
 import { hasRole } from './context.js';
 import { Empty, Card, ToastProvider, useToast } from './components/ui.jsx';
@@ -38,17 +38,18 @@ function Shell({ user, onLogout }) {
   const [ready, setReady] = useState(false);
   const [badge, setBadge] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const live = useLiveTick(30000);
 
   useEffect(() => {
-    let live = true;
+    let alive = true;
     api('facilities/?page_size=200').then(list).catch(e => { toast(e.message, true); return []; }).then(fs => {
-      if (!live) return;
+      if (!alive) return;
       const saved = Number(store.get('gg.fid'));
       setFacilities(fs);
       setFid(fs.find(f => f.id === saved) ? saved : (fs[0] && fs[0].id) || null);
       setReady(true);
     });
-    return () => { live = false; };
+    return () => { alive = false; };
   }, [toast]);
 
   const refreshBadge = useCallback(async () => {
@@ -59,11 +60,11 @@ function Shell({ user, onLogout }) {
     } catch { /* non-critical */ }
   }, [fid]);
 
-  useEffect(() => { refreshBadge(); }, [refreshBadge, route.id]);
+  useEffect(() => { refreshBadge(); }, [refreshBadge, route.id, live.tick]);
   useEffect(() => { document.title = `${route.name} · GreenGrid`; setMenuOpen(false); }, [route]);
 
   const facility = facilities.find(f => f.id === fid) || {};
-  const ctx = useMemo(() => ({ user, facilities, fid, facility, refreshBadge }), [user, facilities, fid, facility, refreshBadge]);
+  const ctx = useMemo(() => ({ user, facilities, fid, facility, refreshBadge, tick: live.tick }), [user, facilities, fid, facility, refreshBadge, live.tick]);
   const changeFacility = e => { const v = Number(e.target.value); setFid(v); store.set('gg.fid', v); };
   const toggleTheme = () => {
     const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -96,6 +97,10 @@ function Shell({ user, onLogout }) {
             <button className="icon-btn menu" aria-label="Toggle navigation" onClick={() => setMenuOpen(o => !o)}>☰</button>
             <h1>{route.name}</h1>
             <div className="spacer" />
+            <span className="live" title="Data refreshes automatically every 30 seconds">
+              <i className="dot" /><span className="live-text">Live · {live.at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+            </span>
+            <button className="icon-btn" aria-label="Refresh now" title="Refresh now" onClick={live.refresh}>⟳</button>
             <label className="fac-select">
               <span className="muted small">Facility</span>
               <select value={fid || ''} onChange={changeFacility}>

@@ -125,7 +125,7 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 | **Facilities** | `#/sites` | Facilities and meters; admins and field engineers can register meters and upload CSV readings |
 | **Users** | `#/users` | Admins and field engineers add users and choose which facilities they can see (admins: customers and field engineers; field engineers: customers for their own facilities). Admins can also deactivate users |
 
-Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, responsive layout.
+Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, and a responsive layout that works from phones to desktops. The dashboard, alerts, billing and renewables pages refresh themselves every 30 seconds while the tab is open (a "Live" indicator in the top bar shows the last update, and the refresh button updates immediately). Open forms and dialogs are not interrupted by a refresh.
 
 All roles can view every page for their assigned facilities (admins see all facilities). What each role can *do* differs, and the backend enforces it:
 

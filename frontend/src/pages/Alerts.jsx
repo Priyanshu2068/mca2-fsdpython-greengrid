@@ -6,7 +6,7 @@ import { dt, list, title } from '../format.js';
 import { Card, Empty, Pill, PromptDialog, Seg, Table, sevKind, useToast } from '../components/ui.jsx';
 
 export default function Alerts() {
-  const { fid, refreshBadge, user } = useApp();
+  const { fid, refreshBadge, user, tick } = useApp();
   const canAct = hasRole(user, 'admin', 'field_engineer');
   const toast = useToast();
   const [status, setStatus] = useState('open');
@@ -14,7 +14,7 @@ export default function Alerts() {
   const [prompt, setPrompt] = useState(null); // {id, action}
   const res = useAsync(
     async () => list(await api('analytics/alerts/?' + qs({ facility_id: fid, status: status === 'all' ? '' : status, page_size: 200 }))),
-    [fid, status],
+    [fid, status, tick],
   );
 
   const update = async (id, action, notes = '') => {
