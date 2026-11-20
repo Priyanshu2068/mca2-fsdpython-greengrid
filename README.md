@@ -94,6 +94,20 @@ Facility is the root of the model: every query is scoped to the user's assigned 
 
 "Typical EMIS tools" is a general characterisation of common commercial products, not a benchmark of any specific vendor.
 
+### 3.5 How Recommendations Are Generated
+
+Recommendations come from 5 fixed, deterministic rules in [`backend/recommendations/services.py`](backend/recommendations/services.py), not from AI or an external service. The command `python manage.py generate_recommendations` (also run by `seed_demo`) evaluates the rules for each facility and saves one recommendation per rule per facility. Re-running updates them instead of duplicating. The rule definitions are stored in the `ecm_rule` table.
+
+| Rule | Does it look at real data? | How the savings are worked out |
+| :--- | :--- | :--- |
+| Peak shaving | Yes. It only fires if peak-hour energy is over 20% of the last 30 days' usage. | Floor area x 8.5 kWh/m² shifted x ₹2.50 |
+| Power factor (APFC) | Partly. It uses the count of low power-factor alerts. | ₹1,80,000 if there are alerts, otherwise ₹95,000 |
+| HVAC weekend setback | No. It always appears. | Floor area x 14.5 kWh/m² x ₹7.80 |
+| Baseload reduction | No. It always appears. | Floor area x 6.8 kWh/m² x ₹7.50 |
+| Diesel generator overlap | Partly. It uses the count of generator-grid clash alerts. | 5,200 kWh x ₹23.50, or ₹75,000 if there are no alerts |
+
+Implementation costs and action-plan text are fixed in the code. The savings figures are rule-of-thumb estimates scaled by floor area, not values measured from a facility's own consumption.
+
 ---
 
 ## 4. Web Client (Frontend)
