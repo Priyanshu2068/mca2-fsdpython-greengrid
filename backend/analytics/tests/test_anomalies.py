@@ -140,3 +140,23 @@ def test_alert_acknowledge_api(setup_facility):
     assert alert.status == 'acknowledged'
     assert alert.resolution_notes == 'Maintenance team notified.'
 
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('role,expected', [('field_engineer', 200), ('admin', 200), ('customer', 403)])
+def test_alert_update_is_role_restricted(setup_facility, role, expected):
+    _, fac, incomer, _ = setup_facility
+    user = CustomUser.objects.create_user(email=f'{role}@gg.in', password='pass', role=role)
+    UserFacilityAssignment.objects.create(user=user, facility=fac)
+    alert = AnomalyAlert.objects.create(
+        facility=fac, meter=incomer, anomaly_type='low_power_factor',
+        severity='high', reason='PF dropped.', status='open'
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+    res = client.patch(f'/api/v1/analytics/alerts/{alert.id}/', {'status': 'acknowledged'})
+    assert res.status_code == expected
+    if expected == 403:
+        assert res.json()['error']['code'] == 'PERMISSION_DENIED'
+        alert.refresh_from_db()
+        assert alert.status == 'open'

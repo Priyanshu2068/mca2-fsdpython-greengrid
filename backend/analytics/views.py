@@ -23,6 +23,7 @@ from analytics.selectors import (
 )
 from analytics.models import AnomalyAlert
 from core.scoping import get_user_facility_ids
+from core.permissions import deny_unless_role
 
 class HourlyRollupListView(APIView):
     """
@@ -114,6 +115,11 @@ class AnomalyAlertDetailView(APIView):
 
     @extend_schema(request=AnomalyAlertUpdateSerializer, responses={200: AnomalyAlertSerializer})
     def patch(self, request, pk, *args, **kwargs):
+        denied = deny_unless_role(
+            request.user, ('admin', 'field_engineer'),
+            'Only administrators and field engineers can update alerts.')
+        if denied:
+            return denied
         alert = self.get_object(pk, request.user)
         serializer = AnomalyAlertUpdateSerializer(alert, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)

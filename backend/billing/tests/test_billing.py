@@ -118,3 +118,57 @@ def test_reconciliation_action_required_variance(billing_setup):
     assert rec.reconciliation_status == 'variance_action_required'
     # Variance cost = 5,000 kWh * 8.0 = ₹40,000.00
     assert rec.variance_cost_inr == Decimal('40000.00')
+
+
+# ---------- manual bill entry permissions ----------
+
+def _bill_payload(fac, tariff, number):
+    return {
+        'facility': fac.id,
+        'tariff': tariff.id,
+        'bill_number': number,
+        'billing_cycle_start': '2026-03-01',
+        'billing_cycle_end': '2026-03-10',
+        'due_date': '2026-03-25',
+        'billed_kwh': '100000.0000',
+        'billed_max_demand_kva': '1500.00',
+        'billed_amount_inr': '800000.00',
+        'payment_status': 'unpaid',
+    }
+
+
+@pytest.mark.django_db
+def test_field_engineer_can_record_bill_for_assigned_facility(billing_setup):
+    from facilities.models import UserFacilityAssignment
+    _, fac, tariff = billing_setup
+    eng = CustomUser.objects.create_user(email='eng@gg.in', password='pass', role='field_engineer')
+    UserFacilityAssignment.objects.create(user=eng, facility=fac)
+    client = APIClient()
+    client.force_authenticate(user=eng)
+    res = client.post('/api/v1/billing/bills/', _bill_payload(fac, tariff, 'BILL-ENG-1'), format='json')
+    assert res.status_code == 201
+    assert UtilityBill.objects.filter(bill_number='BILL-ENG-1').exists()
+
+
+@pytest.mark.django_db
+def test_field_engineer_cannot_record_bill_for_unassigned_facility(billing_setup):
+    _, fac, tariff = billing_setup
+    eng = CustomUser.objects.create_user(email='eng2@gg.in', password='pass', role='field_engineer')
+    client = APIClient()
+    client.force_authenticate(user=eng)
+    res = client.post('/api/v1/billing/bills/', _bill_payload(fac, tariff, 'BILL-ENG-2'), format='json')
+    assert res.status_code == 404
+    assert not UtilityBill.objects.filter(bill_number='BILL-ENG-2').exists()
+
+
+@pytest.mark.django_db
+def test_customer_cannot_record_bill(billing_setup):
+    from facilities.models import UserFacilityAssignment
+    _, fac, tariff = billing_setup
+    cust = CustomUser.objects.create_user(email='cust@gg.in', password='pass', role='customer')
+    UserFacilityAssignment.objects.create(user=cust, facility=fac)
+    client = APIClient()
+    client.force_authenticate(user=cust)
+    res = client.post('/api/v1/billing/bills/', _bill_payload(fac, tariff, 'BILL-CUST'), format='json')
+    assert res.status_code == 403
+    assert res.json()['error']['code'] == 'PERMISSION_DENIED'

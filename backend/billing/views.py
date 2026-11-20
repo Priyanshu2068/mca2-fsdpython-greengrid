@@ -61,16 +61,21 @@ class UtilityBillViewSet(viewsets.ModelViewSet):
         get_facility_for_user(bill.facility_id, self.request.user)
         return bill
 
+    # Admins and field engineers may record bills manually (emergency / offline entry).
+    BILL_ENTRY_ROLES = ('admin', 'field_engineer')
+
     def create(self, request, *args, **kwargs):
-        if getattr(request.user, 'role', '') != 'admin' and not request.user.is_superuser:
+        user = request.user
+        if getattr(user, 'role', '') not in self.BILL_ENTRY_ROLES and not user.is_superuser:
             return Response(
-                {'error': {'status': 403, 'code': 'PERMISSION_DENIED', 'message': 'Only administrators can record utility bills.'}},
+                {'error': {'status': 403, 'code': 'PERMISSION_DENIED', 'message': 'Only administrators and field engineers can record utility bills.'}},
                 status=status.HTTP_403_FORBIDDEN
             )
         serializer = UtilityBillCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         facility = serializer.validated_data['facility']
+        get_facility_for_user(facility.id, user)  # engineers: assigned facilities only (404 otherwise)
         tariff = serializer.validated_data['tariff']
 
         bill = record_utility_bill(

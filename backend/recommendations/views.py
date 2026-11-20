@@ -21,6 +21,7 @@ from recommendations.selectors import (
     get_recommendations_summary,
 )
 from recommendations.services import update_recommendation_status
+from core.permissions import deny_unless_role
 
 class ECMRuleListView(APIView):
     """
@@ -69,6 +70,11 @@ class RecommendationDetailView(APIView):
         responses={200: RecommendationSerializer}
     )
     def patch(self, request, pk, *args, **kwargs):
+        denied = deny_unless_role(
+            request.user, ('admin', 'customer'),
+            'Only administrators and customers can accept or dismiss recommendations.')
+        if denied:
+            return denied
         recom = get_recommendation_by_id(request.user, pk)
         serializer = RecommendationStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

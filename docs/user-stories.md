@@ -201,6 +201,7 @@
   2. Auto-computes `effective_cost_per_kwh_inr = billed_amount_inr / billed_kwh`.
   3. Validates billing cycle date ranges (`billing_cycle_end >= billing_cycle_start`).
   4. Endpoints `GET` and `POST` at `/api/v1/billing/bills/` with filtering by facility and fiscal year.
+  5. Manual bill entry (for emergency or offline cases) is available to `admin` and `field_engineer` users; engineers can only record bills for their assigned facilities. Customers cannot record bills.
 
 #### P02-US16: Metered vs. Billed Variance Reconciliation Engine
 - **App:** `billing` | **Phase:** Phase 2 | **Estimate:** 5.5 Hours | **Role:** Energy Auditor

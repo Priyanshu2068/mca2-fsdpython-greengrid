@@ -184,3 +184,20 @@ def test_recommendations_api_endpoints_and_scoping(recom_setup):
     assert res_summary.status_code == 200
     assert res_summary.data['total_recommendations'] == 5
     assert res_summary.data['dismissed_count'] == 1
+
+
+@pytest.mark.parametrize('role,expected', [('customer', 200), ('admin', 200), ('field_engineer', 403)])
+def test_recommendation_update_is_role_restricted(recom_setup, role, expected):
+    from facilities.models import UserFacilityAssignment
+    fac1 = recom_setup['fac1']
+    user = CustomUser.objects.create_user(email=f'{role}_rr@greengrid.in', password='pass', role=role)
+    UserFacilityAssignment.objects.get_or_create(user=user, facility=fac1)
+
+    call_command('generate_recommendations')
+    client = APIClient()
+    client.force_authenticate(user=user)
+    recom_id = client.get(f'/api/v1/recommendations/?facility_id={fac1.id}').data[0]['id']
+    res = client.patch(f'/api/v1/recommendations/{recom_id}/', {'status': 'accepted'})
+    assert res.status_code == expected
+    if expected == 403:
+        assert res.data['error']['code'] == 'PERMISSION_DENIED'
