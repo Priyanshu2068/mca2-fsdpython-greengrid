@@ -63,11 +63,6 @@ class Command(BaseCommand):
             defaults=dict(first_name='Rohan', last_name='Customer', role='customer'))
         cust.set_password(DEMO_PASSWORD)
         cust.save()
-        cust_mum, _ = CustomUser.objects.get_or_create(
-            email='mumbai.customer@greengrid.test',
-            defaults=dict(first_name='Priya', last_name='Sharma', role='customer'))
-        cust_mum.set_password(DEMO_PASSWORD)
-        cust_mum.save()
         eng, _ = CustomUser.objects.get_or_create(
             email='engineer@greengrid.test',
             defaults=dict(first_name='Karthik', last_name='Nair', role='field_engineer'))
@@ -102,16 +97,8 @@ class Command(BaseCommand):
                 operating_hours_per_week='60', address=f"Business District, {spec['city']}", city=spec['city'],
                 state=spec['state'], pin_code=spec['pin'], latitude=spec['lat'], longitude=spec['lon'],
                 sanctioned_demand_kva=spec['kva']))
-            if spec['code'] == 'BLR-TP-01':
-                UserFacilityAssignment.objects.get_or_create(user=admin, facility=fac)
-                UserFacilityAssignment.objects.get_or_create(user=cust, facility=fac)
-                UserFacilityAssignment.objects.get_or_create(user=eng, facility=fac)
-                UserFacilityAssignment.objects.filter(user=cust_mum, facility=fac).delete()
-            elif spec['code'] == 'MUM-OF-01':
-                UserFacilityAssignment.objects.get_or_create(user=admin, facility=fac)
-                UserFacilityAssignment.objects.get_or_create(user=cust_mum, facility=fac)
-                UserFacilityAssignment.objects.filter(user=cust, facility=fac).delete()
-                UserFacilityAssignment.objects.filter(user=eng, facility=fac).delete()
+            for u in (admin, cust, eng):
+                UserFacilityAssignment.objects.get_or_create(user=u, facility=fac)
             b, _ = Building.objects.get_or_create(facility=fac, code='B1', defaults=dict(
                 name='Block A', total_floors=12, floor_area_sqm=spec['area']))
             for code, name, src, cat in METERS:
@@ -157,12 +144,7 @@ class Command(BaseCommand):
         call_command('compute_benchmarks')
         call_command('generate_recommendations')
         self.stdout.write(self.style.SUCCESS(
-            f"Done. Demo accounts:\n"
-            f"  Admin:    admin@greengrid.test (all facilities)\n"
-            f"  Customer: customer@greengrid.test (Bengaluru Tech Park only)\n"
-            f"  Customer: mumbai.customer@greengrid.test (Mumbai Corporate Tower only)\n"
-            f"  Engineer: engineer@greengrid.test (Bengaluru Tech Park)\n"
-            f"  Password: {DEMO_PASSWORD}"))
+            f"Done. Demo accounts: admin@greengrid.test, customer@greengrid.test, engineer@greengrid.test / {DEMO_PASSWORD}"))
 
     def _seed_dg_and_solar(self, fac, now, days):
         self._solar(fac, now, days)
