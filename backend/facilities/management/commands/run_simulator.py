@@ -9,7 +9,7 @@ from facilities.models import Facility
 from simulator.simulator import EnvironmentalSimulator
 
 class Command(BaseCommand):
-    help = 'Runs environmental load simulator driven by NASA POWER weather patterns.'
+    help = 'Runs the built-in load simulator to generate 15-minute meter readings.'
 
     def add_arguments(self, parser):
         parser.add_argument('--facility-id', type=int, required=True, help='ID of target Facility')

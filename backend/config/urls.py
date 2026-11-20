@@ -6,6 +6,7 @@ All API endpoints mounted under /api/v1/.
 from pathlib import Path
 
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import path, re_path, include
 from django.views.generic import RedirectView
 from django.views.static import serve as static_serve
@@ -15,11 +16,17 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / 'frontend'
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / 'frontend' / 'dist'
 
 
 def frontend(request, path=''):
-    """Serve the single-page web client from /frontend (same origin => session + CSRF just work)."""
+    """Serve the built React client (frontend/dist) at /app/ (same origin => session + CSRF just work)."""
+    if not (FRONTEND_DIR / 'index.html').exists():
+        return HttpResponse(
+            'Frontend not built. Run <code>npm install &amp;&amp; npm run build</code> in <code>frontend/</code> '
+            '(or <code>npm run dev</code> and open http://localhost:5173/app/).',
+            status=503,
+        )
     return static_serve(request, path or 'index.html', document_root=FRONTEND_DIR)
 
 
