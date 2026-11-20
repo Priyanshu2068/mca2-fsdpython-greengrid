@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 
+from core.scoping import get_user_facility_ids
+
 from benchmarking.serializers import (
     BuildingBenchmarkSerializer,
     FacilityBenchmarkScoreSerializer,
@@ -52,5 +54,21 @@ class FacilityRankingListView(APIView):
         facility_type = request.query_params.get('facility_type')
         year = request.query_params.get('year')
         rankings = get_facility_rankings(request.user, facility_type=facility_type, year=year)
-        return Response(FacilityBenchmarkScoreSerializer(rankings[:50], many=True).data)
+        rows = [dict(r) for r in FacilityBenchmarkScoreSerializer(rankings[:50], many=True).data]
+
+        # Peers outside the caller's facilities are anonymised: users can compare their
+        # efficiency (EUI, percentile, stars) but never see who the other facilities are.
+        scope = get_user_facility_ids(request.user)  # None = admin / superuser (sees everything)
+        if scope is not None:
+            for rank, row in enumerate(rows, start=1):
+                if row['facility'] not in scope:
+                    row.update({
+                        'id': None,
+                        'facility': None,
+                        'facility_name': f'Peer facility #{rank}',
+                        'facility_code': '',
+                        'gross_floor_area_sqm': None,
+                        'annual_energy_kwh': None,
+                    })
+        return Response(rows)
 

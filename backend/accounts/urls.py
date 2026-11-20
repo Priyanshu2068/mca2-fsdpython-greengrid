@@ -10,7 +10,8 @@ from accounts.views import (
 )
 
 user_list = UserManagementViewSet.as_view({'get': 'list', 'post': 'create'})
-user_detail = UserManagementViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})
+user_detail = UserManagementViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'})
+user_facilities = UserManagementViewSet.as_view({'put': 'set_facilities'})
 
 urlpatterns = [
     path('csrf/', CSRFTokenView.as_view(), name='csrf-token'),
@@ -20,5 +21,6 @@ urlpatterns = [
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('users/', user_list, name='user-list'),
     path('users/<int:pk>/', user_detail, name='user-detail'),
+    path('users/<int:pk>/facilities/', user_facilities, name='user-facilities'),
     path('audit-logs/', AuditLogListView.as_view(), name='audit-logs'),
 ]

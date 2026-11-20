@@ -79,3 +79,39 @@ def test_change_password(test_user):
     # Re-authenticate with new password
     test_user.refresh_from_db()
     assert test_user.check_password('NewStrongPassword@2026')
+
+
+@pytest.mark.django_db
+def test_change_password_rejects_wrong_current_password(test_user):
+    client = APIClient()
+    client.force_login(test_user)
+    response = client.post('/api/v1/accounts/change-password/', {
+        'old_password': 'WrongPassword!', 'new_password': 'NewStrongPassword@2026'
+    })
+    assert response.status_code == 400
+    test_user.refresh_from_db()
+    assert test_user.check_password('TestPassword123!')
+
+
+@pytest.mark.django_db
+def test_change_password_rejects_same_password_and_short_password(test_user):
+    client = APIClient()
+    client.force_login(test_user)
+    same = client.post('/api/v1/accounts/change-password/', {
+        'old_password': 'TestPassword123!', 'new_password': 'TestPassword123!'
+    })
+    assert same.status_code == 400
+    short = client.post('/api/v1/accounts/change-password/', {
+        'old_password': 'TestPassword123!', 'new_password': 'short'
+    })
+    assert short.status_code == 400
+
+
+@pytest.mark.django_db
+def test_change_password_keeps_session_signed_in(test_user):
+    client = APIClient()
+    client.force_login(test_user)
+    assert client.post('/api/v1/accounts/change-password/', {
+        'old_password': 'TestPassword123!', 'new_password': 'NewStrongPassword@2026'
+    }).status_code == 200
+    assert client.get('/api/v1/accounts/me/').status_code == 200

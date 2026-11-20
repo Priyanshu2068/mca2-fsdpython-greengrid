@@ -2,6 +2,7 @@
 GreenGrid Facilities Views.
 """
 
+from accounts.services import record_audit_log
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -55,7 +56,12 @@ class FacilityViewSet(viewsets.ModelViewSet):
         return get_facility_for_user(self.kwargs['pk'], self.request.user)
 
     def perform_create(self, serializer):
-        create_facility(serializer.validated_data)
+        facility = create_facility(dict(serializer.validated_data))
+        serializer.instance = facility
+        record_audit_log(
+            user=self.request.user, action='CREATE_FACILITY', resource_type='Facility', resource_id=facility.id,
+            ip_address=self.request.META.get('REMOTE_ADDR'), details={'code': facility.code, 'name': facility.name},
+        )
 
     @action(detail=True, methods=['get', 'post'], url_path='buildings')
     def buildings(self, request, pk=None):

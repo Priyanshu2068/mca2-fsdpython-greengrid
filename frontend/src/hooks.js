@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Run an async loader whenever deps change; ignores out-of-date responses. */
 export function useAsync(fn, deps) {
@@ -28,4 +28,26 @@ export function useHashRoute() {
     return () => window.removeEventListener('hashchange', on);
   }, []);
   return route;
+}
+
+/**
+ * App-wide live refresh. Bumps `tick` every `ms` while the tab is visible, and again when a
+ * hidden tab becomes visible after being idle. Pages add `tick` to their data dependencies.
+ */
+export function useLiveTick(ms = 30000) {
+  const [tick, setTick] = useState(0);
+  const [at, setAt] = useState(() => new Date());
+  const last = useRef(Date.now());
+  const refresh = useCallback(() => {
+    last.current = Date.now();
+    setAt(new Date());
+    setTick(t => t + 1);
+  }, []);
+  useEffect(() => {
+    const id = setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, ms);
+    const onVisible = () => { if (document.visibilityState === 'visible' && Date.now() - last.current > ms) refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
+  }, [ms, refresh]);
+  return { tick, at, refresh };
 }

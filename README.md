@@ -94,6 +94,20 @@ Facility is the root of the model: every query is scoped to the user's assigned 
 
 "Typical EMIS tools" is a general characterisation of common commercial products, not a benchmark of any specific vendor.
 
+### 3.5 How Recommendations Are Generated
+
+Recommendations come from 5 fixed, deterministic rules in [`backend/recommendations/services.py`](backend/recommendations/services.py), not from AI or an external service. The command `python manage.py generate_recommendations` (also run by `seed_demo`) evaluates the rules for each facility and saves one recommendation per rule per facility. Re-running updates them instead of duplicating. The rule definitions are stored in the `ecm_rule` table.
+
+| Rule | Does it look at real data? | How the savings are worked out |
+| :--- | :--- | :--- |
+| Peak shaving | Yes. It only fires if peak-hour energy is over 20% of the last 30 days' usage. | Floor area x 8.5 kWh/m² shifted x ₹2.50 |
+| Power factor (APFC) | Partly. It uses the count of low power-factor alerts. | ₹1,80,000 if there are alerts, otherwise ₹95,000 |
+| HVAC weekend setback | No. It always appears. | Floor area x 14.5 kWh/m² x ₹7.80 |
+| Baseload reduction | No. It always appears. | Floor area x 6.8 kWh/m² x ₹7.50 |
+| Diesel generator overlap | Partly. It uses the count of generator-grid clash alerts. | 5,200 kWh x ₹23.50, or ₹75,000 if there are no alerts |
+
+Implementation costs and action-plan text are fixed in the code. The savings figures are rule-of-thumb estimates scaled by floor area, not values measured from a facility's own consumption.
+
 ---
 
 ## 4. Web Client (Frontend)
@@ -105,12 +119,13 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 | **Overview** | `#/overview` | Today's consumption, month-to-date, peak demand vs. sanctioned kVA, energy mix, load breakdown, 24-hour / 30-day trends |
 | **Alerts** | `#/alerts` | Anomaly alerts with acknowledge / resolve / false-positive workflow |
 | **Billing** | `#/billing` | Utility bills and bill-vs-metered reconciliation; admins and field engineers can record a bill manually for emergency or offline entry |
-| **Benchmarking** | `#/benchmark` | EUI, BEE star rating, percentile and facility ranking |
+| **Benchmarking** | `#/benchmark` | EUI, BEE star rating, percentile and facility ranking (facilities you are not assigned to appear anonymously as "Peer facility #N") |
 | **Recommendations** | `#/recs` | Energy conservation measures with ₹ savings; accept, dismiss or mark implemented |
 | **Renewables & Carbon** | `#/solar` | Solar generation, self-consumption, emissions by source, grid outages |
-| **Facilities** | `#/sites` | Facilities and meters; admins and field engineers can register meters and upload CSV readings |
+| **Facilities** | `#/sites` | Facilities and meters; admins can add a facility, and admins and field engineers can register meters and upload CSV readings |
+| **Users** | `#/users` | Admins and field engineers add users and choose which facilities they can see (admins: customers and field engineers; field engineers: customers for their own facilities). Admins can also deactivate users |
 
-Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, responsive layout.
+Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, and a responsive layout that works from phones to desktops. The dashboard, alerts, billing and renewables pages refresh themselves every 30 seconds while the tab is open (a "Live" indicator in the top bar shows the last update, and the refresh button updates immediately). Open forms and dialogs are not interrupted by a refresh.
 
 All roles can view every page for their assigned facilities (admins see all facilities). What each role can *do* differs, and the backend enforces it:
 
@@ -121,7 +136,10 @@ All roles can view every page for their assigned facilities (admins see all faci
 | Accept / dismiss recommendations | Yes | Yes | View only |
 | Record a utility bill (manual / emergency entry) | Yes | No | Yes (assigned facilities) |
 | Register meters, upload CSV readings | Yes | No | Yes |
-| Create buildings, manage users | Yes | No | No |
+| Add users and grant facility access | Yes (customers, field engineers) | No | Yes (customers, own facilities only) |
+| Add a facility | Yes | No | No |
+| Create buildings, deactivate users | Yes | No | No |
+| Change own password (sidebar) | Yes | Yes | Yes |
 
 ```
 frontend/
@@ -134,6 +152,18 @@ frontend/
     ├── components/       # ui atoms, SVG charts, icons
     └── pages/            # one component per page above
 ```
+
+### Adding Users and Granting Facility Access
+
+Admins and field engineers can add users from the **Users** page. A temporary password is generated, shown once after the user is created, and cannot be retrieved later. Every grant and change is written to the audit log.
+
+| | Admin | Field engineer |
+| :--- | :--- | :--- |
+| Roles they can create | Customers and field engineers | Customers only |
+| Facilities they can grant | Any facility (optional) | Only their own, and at least one is required |
+| Users they see in the list | Everyone | Customers who share one of their facilities |
+| Edit someone's facility access | Yes | Yes, within their own facilities (access to other facilities is kept) |
+| Deactivate a user | Yes | No |
 
 ---
 

@@ -154,7 +154,21 @@ def test_benchmarking_api_endpoints(benchmark_setup):
     res_rank = client.get('/api/v1/benchmarking/ranking/?facility_type=commercial_office&year=2025')
     assert res_rank.status_code == 200
     assert len(res_rank.data) == 2
-    # Ranked ascending by EUI: Eco Tower (lower EUI) is ranked first
+    # Ranked ascending by EUI: Eco Tower (lower EUI) is ranked first and is the customer's own facility
     assert res_rank.data[0]['facility_code'] == 'FAC-ECO-01'
-    assert res_rank.data[1]['facility_code'] == 'FAC-VIN-02'
+    assert res_rank.data[0]['facility_name'] == 'Eco Office Tower'
+    # The other customer's facility is anonymised: comparison data stays, identity does not
+    peer = res_rank.data[1]
+    assert peer['facility_name'] == 'Peer facility #2'
+    assert peer['facility'] is None
+    assert peer['facility_code'] == ''
+    assert peer['gross_floor_area_sqm'] is None
+    assert peer['annual_energy_kwh'] is None
+    assert peer['calculated_eui_kwh_sqm_year'] is not None and peer['star_rating'] is not None
+    assert 'Vintage' not in str(res_rank.data) and 'FAC-VIN-02' not in str(res_rank.data)
+
+    # Admin still sees every facility by name
+    client.force_authenticate(user=admin)
+    admin_rank = client.get('/api/v1/benchmarking/ranking/?facility_type=commercial_office&year=2025')
+    assert [r['facility_code'] for r in admin_rank.data] == ['FAC-ECO-01', 'FAC-VIN-02']
 

@@ -45,9 +45,11 @@ Standard error codes:
 | `POST` | `/api/v1/accounts/login/` | Public | Authenticates user credentials and establishes Django session |
 | `POST` | `/api/v1/accounts/logout/` | Authenticated | Clears session cookie and invalidates session |
 | `GET` | `/api/v1/accounts/me/` | Authenticated | Retrieves current logged-in user profile, role, and facility scopes |
-| `POST` | `/api/v1/accounts/change-password/` | Authenticated | Updates account password |
-| `GET` | `/api/v1/accounts/users/` | `admin` | Lists system users with filtering by role |
-| `POST` | `/api/v1/accounts/users/` | `admin` | Provisions a new customer or field engineer account |
+| `POST` | `/api/v1/accounts/change-password/` | Authenticated | Updates the caller's own password. Requires the current password; the new password must be at least 8 characters and different from the current one. The session stays signed in |
+| `GET` | `/api/v1/accounts/users/` | `admin`, `field_engineer` | Lists users with filtering by role. Admins see everyone; field engineers see only customers who share one of their facilities |
+| `POST` | `/api/v1/accounts/users/` | `admin`, `field_engineer` | Provisions a user and grants facility access (`facility_ids`). Admins can create customers and field engineers (facilities optional). Field engineers can create customers only, for at least one of their own facilities (404 for any other facility) |
+| `PUT` | `/api/v1/accounts/users/{id}/facilities/` | `admin`, `field_engineer` | Replaces a user's facility access within the caller's scope. Access outside the caller's facilities is left untouched. Writes an `UPDATE_FACILITY_ACCESS` audit entry |
+| `PATCH` | `/api/v1/accounts/users/{id}/` | `admin` | Updates a profile or activates / deactivates a user |
 | `GET` | `/api/v1/accounts/audit-logs/` | `admin` | Ingestion and operational security audit log |
 
 ### `POST /api/v1/accounts/login/`
@@ -83,7 +85,7 @@ Standard error codes:
 | Method | Endpoint | Allowed Roles | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/facilities/` | `admin`, `customer`, `field_engineer` | Lists facilities scoped to user's role |
-| `POST` | `/api/v1/facilities/` | `admin` | Provisions a new commercial facility |
+| `POST` | `/api/v1/facilities/` | `admin` | Provisions a new commercial facility. The code is normalised to upper case and must be unique; floor area and sanctioned demand must be at least 1 and operating hours between 1 and 168. Returns the created facility and writes a `CREATE_FACILITY` audit entry |
 | `GET` | `/api/v1/facilities/{id}/` | Scoped Roles | Detailed facility profile, square footage, demand limit |
 | `GET` | `/api/v1/facilities/{id}/buildings/` | Scoped Roles | Lists buildings contained in facility |
 | `GET` | `/api/v1/facilities/{id}/meters/` | Scoped Roles | Lists sub-meters with source and load category |
@@ -240,7 +242,7 @@ All dashboard endpoints read exclusively from pre-aggregated rollups and guarant
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/benchmarking/standards/` | Scoped Roles | Indian commercial building EUI benchmarks ($\text{kWh/m}^2/\text{yr}$) |
 | `GET` | `/api/v1/benchmarking/scores/` | Scoped Roles | Historical annual benchmark scores and star ratings |
-| `GET` | `/api/v1/benchmarking/ranking/` | Scoped Roles | Peer ranking percentile within building category |
+| `GET` | `/api/v1/benchmarking/ranking/` | Scoped Roles | Peer ranking percentile within building category. Admins see every facility; other roles see their own facilities in full and all other facilities anonymised (`Peer facility #N`, with name, code, id, floor area and absolute energy removed) so they can compare efficiency without learning who the peers are |
 
 ### `GET /api/v1/benchmarking/scores/?facility_id=1`
 **Response (200 OK):**

@@ -7,9 +7,9 @@ import { LOAD_NAMES, PALETTE, SOURCE_NAMES, SRC_COLORS, dOnly, dt, kwh, nf, num,
 import { Card, Empty, Kpi, Loader, Meter, Seg, Swatch, useToast } from '../components/ui.jsx';
 import { Donut, LineChart } from '../components/Charts.jsx';
 
-function Trend({ fid }) {
+function Trend({ fid, tick }) {
   const [range, setRange] = useState('24h');
-  const res = useAsync(() => api(`dashboard/trends/?facility_id=${fid}&range=${range}`), [fid, range]);
+  const res = useAsync(() => api(`dashboard/trends/?facility_id=${fid}&range=${range}`), [fid, range, tick]);
   const toast = useToast();
   const pts = (res.data && res.data.points) || [];
   const labels = pts.map(p => p.timestamp || p.date);
@@ -44,7 +44,7 @@ function Trend({ fid }) {
 }
 
 export default function Overview() {
-  const { fid, facility } = useApp();
+  const { fid, facility, tick } = useApp();
   const res = useAsync(async () => {
     const [sum, mix, load] = await Promise.all([
       api(`dashboard/summary/?facility_id=${fid}`),
@@ -52,7 +52,7 @@ export default function Overview() {
       api(`dashboard/load-breakdown/?facility_id=${fid}`),
     ]);
     return { sum, mix, load };
-  }, [fid]);
+  }, [fid, tick]);
 
   return (
     <Loader res={res}>
@@ -81,7 +81,7 @@ export default function Overview() {
                 sub={m.active_anomalies_count ? <Link to="alerts">Review alerts →</Link> : 'All meters look healthy'} />
             </div>
             <div className="grid cols-3">
-              <Trend fid={fid} />
+              <Trend fid={fid} tick={tick} />
               <Card head={<>Energy mix <span className="muted small">· last 30 days</span></>}>
                 <div className="donut-wrap">
                   <Donut items={mixItems} centerTop={kwh(mix.total_consumption_kwh)} centerBottom="total" fmt={kwh} />

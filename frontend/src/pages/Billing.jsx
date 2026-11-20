@@ -74,7 +74,7 @@ function BillDialog({ facilityId, facilityName, onClose, onDone }) {
 }
 
 export default function Billing() {
-  const { fid, facility, user } = useApp();
+  const { fid, facility, user, tick } = useApp();
   const [adding, setAdding] = useState(false);
   const canRecord = user && (user.role === 'admin' || user.role === 'field_engineer' || user.is_superuser);
   const res = useAsync(async () => {
@@ -83,7 +83,7 @@ export default function Billing() {
       api('billing/reconciliations/?' + qs({ facility_id: fid })),
     ]);
     return { B: list(bills), R: list(recs) };
-  }, [fid]);
+  }, [fid, tick]);
 
   return (
     <Loader res={res}>
