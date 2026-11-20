@@ -62,3 +62,19 @@ class IsFieldEngineerUser(BasePermission):
             request.user.is_authenticated and
             getattr(request.user, 'role', None) == 'field_engineer'
         )
+
+
+def deny_unless_role(user, allowed_roles, message):
+    """
+    Returns a 403 error-envelope Response if the user's role is not in allowed_roles
+    (superusers always pass); returns None when the action is permitted.
+    """
+    from rest_framework import status
+    from rest_framework.response import Response
+
+    if getattr(user, 'is_superuser', False) or getattr(user, 'role', None) in allowed_roles:
+        return None
+    return Response(
+        {'error': {'status': 403, 'code': 'PERMISSION_DENIED', 'message': message}},
+        status=status.HTTP_403_FORBIDDEN,
+    )

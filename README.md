@@ -43,6 +43,17 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 
 Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, responsive layout.
 
+All roles can view every page for their assigned facilities (admins see all facilities). What each role can *do* differs, and the backend enforces it:
+
+| Action | Admin | Customer | Field engineer |
+| :--- | :---: | :---: | :---: |
+| View dashboards, billing, benchmarks, renewables | Yes | Yes | Yes |
+| Acknowledge / resolve alerts | Yes | View only | Yes |
+| Accept / dismiss recommendations | Yes | Yes | View only |
+| Record a utility bill (manual / emergency entry) | Yes | No | Yes (assigned facilities) |
+| Register meters, upload CSV readings | Yes | No | Yes |
+| Create buildings, manage users | Yes | No | No |
+
 ```
 frontend/
 ├── index.html

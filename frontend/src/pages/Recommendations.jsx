@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { api, qs } from '../api.js';
-import { useApp } from '../context.js';
+import { useApp, hasRole } from '../context.js';
 import { useAsync } from '../hooks.js';
 import { inr, kwh, list, nf, num, title } from '../format.js';
 import { Card, Empty, Kpi, Pill, PromptDialog, Seg, useToast } from '../components/ui.jsx';
 
-function Rec({ x, busy, onAct }) {
+function Rec({ x, busy, onAct, canAct }) {
   return (
     <section className="card rec">
       <header>
@@ -25,20 +25,21 @@ function Rec({ x, busy, onAct }) {
       <details><summary>Action plan</summary><pre>{x.action_plan}</pre></details>
       {x.status === 'dismissed' && x.dismissal_reason && <div className="small muted">Dismissed: {x.dismissal_reason}</div>}
       <div className="actions">
-        {x.status === 'active' && (
+        {canAct && x.status === 'active' && (
           <>
             <button className="btn primary small" disabled={busy} onClick={() => onAct(x, 'accepted')}>Accept</button>
             <button className="btn small danger" disabled={busy} onClick={() => onAct(x, 'dismissed')}>Dismiss…</button>
           </>
         )}
-        {x.status === 'accepted' && <button className="btn primary small" disabled={busy} onClick={() => onAct(x, 'implemented')}>Mark implemented</button>}
+        {canAct && x.status === 'accepted' && <button className="btn primary small" disabled={busy} onClick={() => onAct(x, 'implemented')}>Mark implemented</button>}
       </div>
     </section>
   );
 }
 
 export default function Recommendations() {
-  const { fid } = useApp();
+  const { fid, user } = useApp();
+  const canAct = hasRole(user, 'admin', 'customer');
   const toast = useToast();
   const [status, setStatus] = useState('active');
   const [busy, setBusy] = useState(null);
@@ -77,11 +78,12 @@ export default function Recommendations() {
       </div>
       <div className="toolbar">
         <Seg value={status} onChange={setStatus} options={['active', 'accepted', 'implemented', 'dismissed', 'all']} />
+        {!canAct && <span className="muted small">View only: recommendations are decided by administrators and customers.</span>}
       </div>
       {recs.error && <div className="form-error" role="alert">{recs.error.message}</div>}
       <div className="grid">
         {recs.data && (recs.data.length
-          ? recs.data.map(x => <Rec key={x.id} x={x} busy={busy === x.id} onAct={onAct} />)
+          ? recs.data.map(x => <Rec key={x.id} x={x} busy={busy === x.id} onAct={onAct} canAct={canAct} />)
           : <Card><Empty>Nothing here. Try another filter.</Empty></Card>)}
         {!recs.data && !recs.error && <div className="skeleton" style={{ height: 180 }} />}
       </div>
