@@ -1,51 +1,26 @@
 """
-GreenGrid Environmental Simulator Engine.
-Replays past environmental periods driven by NASA POWER hourly solar irradiance and temperature,
-generating realistic 15-minute load telemetry for Indian commercial facilities.
+GreenGrid Load Simulator.
+Generates realistic 15-minute load telemetry (HVAC, lighting, IT, solar, main incomer)
+for Indian commercial facilities from a built-in daily temperature and solar model.
 """
 
 import math
 import random
-import requests
 from datetime import datetime, timedelta
 from decimal import Decimal
 from django.utils import timezone
 from facilities.models import Facility, Meter
 from ingestion.services import ingest_bulk_readings
 
-NASA_POWER_API_URL = "https://power.larc.nasa.gov/api/temporal/hourly/point"
-
 class EnvironmentalSimulator:
     def __init__(self, facility: Facility):
         self.facility = facility
-        self.latitude = float(facility.latitude or 12.9716) # Default Bengaluru
-        self.longitude = float(facility.longitude or 77.5946)
 
-    def fetch_nasa_power_data(self, start_date: datetime, end_date: datetime) -> dict:
+    def build_weather_profile(self, start_date: datetime, end_date: datetime) -> dict:
         """
-        Retrieves hourly solar irradiance (ALLSKY_SFC_SW_DWN) and temperature (T2M) from NASA POWER.
-        Falls back to realistic astronomical & thermodynamic model if external API is unreachable.
+        Builds hourly ambient temperature (T2M) and solar irradiance (ALLSKY_SFC_SW_DWN)
+        from a simple daily thermodynamic and astronomical model.
         """
-        start_str = start_date.strftime('%Y%m%d')
-        end_str = end_date.strftime('%Y%m%d')
-        params = {
-            'parameters': 'T2M,ALLSKY_SFC_SW_DWN',
-            'community': 'RE',
-            'longitude': self.longitude,
-            'latitude': self.latitude,
-            'start': start_str,
-            'end': end_str,
-            'format': 'JSON'
-        }
-        try:
-            resp = requests.get(NASA_POWER_API_URL, params=params, timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                return data.get('properties', {}).get('parameter', {})
-        except Exception:
-            pass # Fall back to synthetic astronomical model
-
-        # Fallback synthetic generation
         hourly_temp = {}
         hourly_solar = {}
         curr = start_date
@@ -71,7 +46,7 @@ class EnvironmentalSimulator:
         Generates 15-minute readings across all meters registered for the facility.
         """
         end_date = start_date + timedelta(days=days)
-        weather = self.fetch_nasa_power_data(start_date, end_date)
+        weather = self.build_weather_profile(start_date, end_date)
         temp_data = weather.get('T2M', {})
         solar_data = weather.get('ALLSKY_SFC_SW_DWN', {})
 

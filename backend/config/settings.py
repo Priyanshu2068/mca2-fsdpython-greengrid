@@ -89,12 +89,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database Configuration
-# Uses PostgreSQL 16 via psycopg 3 when DATABASE_URL is set, falls back to SQLite for local tests
+# PostgreSQL 16 via psycopg 3. Set DATABASE_URL in .env (see .env.example).
 DATABASES = {
-    'default': env.db(
-        'DATABASE_URL',
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'
-    )
+    'default': env.db('DATABASE_URL')
 }
 
 # Password validation
