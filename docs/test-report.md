@@ -28,7 +28,7 @@ A comprehensive automated test suite of **52 unit, integration, and end-to-end r
 | **Users & Access** | `backend/accounts/` | 9 | Session auth, CSRF validation, RBAC, password lifecycle, admin user management, audit logging | **PASSED** |
 | **Facilities & Assets** | `backend/facilities/` | 5 | Multi-tenant scoping, meter inventory, SHA-256 API key issuance & rotation, 404 security checks | **PASSED** |
 | **Telemetry Ingestion** | `backend/ingestion/` | 5 | Idempotent bulk upsert (`ON CONFLICT DO NOTHING`), 5000 batch limit, CSV parsing pipeline | **PASSED** |
-| **Weather Simulator** | `backend/simulator/` | 2 | NASA POWER solar irradiance/temperature replay, 15-min diurnal synthetic load curve generator | **PASSED** |
+| **Weather Simulator** | `backend/simulator/` | 2 | daily temperature and solar model, 15-min diurnal synthetic load curve generator | **PASSED** |
 | **Energy Analytics** | `backend/analytics/` | 6 | Incremental 48h hourly rollups, TOD peak/off-peak daily rollups, 4 anomaly detection rules | **PASSED** |
 | **Executive Dashboards** | `backend/dashboard/` | 4 | Sub-second KPI summaries (<1s latency), 24h & 30d trends, energy mix, load category breakdown | **PASSED** |
 | **Utility Billing** | `backend/billing/` | 3 | Commercial HT tariffs, effective cost per kWh (₹/kWh), billed vs. metered tolerance reconciliation | **PASSED** |
@@ -68,7 +68,7 @@ A comprehensive automated test suite of **52 unit, integration, and end-to-end r
 - `test_csv_upload_pipeline`: Validates field engineer offline CSV file upload parsing, header schema validation, and batch log audit generation.
 
 ### 3.4. Environmental Simulator (`simulator`)
-- `test_simulator_generates_readings`: Validates NASA POWER weather data fetching with synthetic solar irradiance and diurnal temperature curves.
+- `test_simulator_generates_readings`: Validates generation of 15-minute readings from the built-in solar irradiance and diurnal temperature model.
 - `test_simulator_run_persists_to_ingestion`: Verifies `python manage.py run_simulator` successfully populates `RawReading` telemetry across facility meters.
 
 ### 3.5. Energy Analytics & Anomaly Detection (`analytics`)

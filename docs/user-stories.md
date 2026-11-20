@@ -21,7 +21,7 @@
 | **P02-US05** | `facilities` | Meter Inventory & Hashed DataSource API Keys | Phase 1 | 2.5 h | High |
 | **P02-US06** | `ingestion` | High-Throughput Bulk 15-Minute Readings API | Phase 1 | 3.5 h | Critical |
 | **P02-US07** | `ingestion` | Batch CSV Upload Pipeline & Error Reporting | Phase 1 | 2.5 h | Medium |
-| **P02-US08** | `simulator` | Environmental Simulator via NASA POWER Replay | Phase 1 | 2.5 h | Medium |
+| **P02-US08** | `simulator` | Built-in Load Simulator | Phase 1 | 2.5 h | Medium |
 | **P02-US09** | `analytics` | Incremental 48-Hour Hourly Rollup Management Command | Phase 1 | 2.5 h | High |
 | **P02-US10** | `analytics` | Daily Energy Rollup & Peak Demand Pipeline | Phase 1 | 2.0 h | High |
 | **P02-US11** | `analytics` | Rule-based Anomaly Detection & AnomalyAlerts | Phase 1 | 2.5 h | Critical |
@@ -120,11 +120,11 @@
   4. Records an `ingestion_batchlog` entry with source type `csv_upload` and execution duration.
   5. Returns comprehensive upload summary with row-level error reasons for invalid lines.
 
-#### P02-US08: Environmental Simulator via NASA POWER Replay
+#### P02-US08: Built-in Load Simulator
 - **App:** `simulator` | **Phase:** Phase 1 | **Estimate:** 2.5 Hours | **Role:** System Demonstrator
-- **Goal:** As a system evaluator, I want a simulator script driven by NASA POWER hourly solar irradiance and temperature to generate realistic 15-minute loads for commercial facilities.
+- **Goal:** As a system evaluator, I want a built-in simulator driven by a daily temperature and solar model to generate realistic 15-minute loads for commercial facilities.
 - **Acceptance Criteria:**
-  1. Management command `python manage.py run_simulator --facility-id=1 --days=30` fetches NASA POWER hourly data (or uses cached fallback).
+  1. Management command `python manage.py run_simulator --facility-id=1 --days=30` generates hourly temperature and solar data from the built-in model.
   2. Generates 15-minute interpolated load profiles for HVAC (temperature correlated), Solar PV (irradiance correlated), Lighting, and IT.
   3. Posts generated readings into the ingestion bulk API endpoint via HTTP with `X-API-Key`.
   4. Supports offline replay mode without requiring live external internet connectivity.
