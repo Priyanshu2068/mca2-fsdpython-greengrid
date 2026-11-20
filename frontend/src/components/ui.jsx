@@ -1,4 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import {
+  Badge, Button, ButtonGroup, Card as BCard, Col, Modal as BModal, Placeholder, Row, Spinner, Table as BTable, Toast, ToastContainer,
+} from 'react-bootstrap';
 import { title } from '../format.js';
 
 /* ---------- toast ---------- */
@@ -7,43 +10,72 @@ export const useToast = () => useContext(ToastCtx);
 
 export function ToastProvider({ children }) {
   const [t, setT] = useState({ msg: '', err: false, show: false });
-  const timer = useRef();
+  const seq = useRef(0);
   const toast = useCallback((msg, err = false) => {
-    setT({ msg, err, show: true });
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => setT(x => ({ ...x, show: false })), 3200);
+    seq.current += 1;
+    setT({ msg, err, show: true, key: seq.current });
   }, []);
   return (
     <ToastCtx.Provider value={toast}>
       {children}
-      <div className={`toast${t.err ? ' err' : ''}${t.show ? ' show' : ''}`} role="status" aria-live="polite">{t.msg}</div>
+      <ToastContainer position="bottom-center" className="p-3" style={{ zIndex: 2100, position: 'fixed' }}>
+        <Toast key={t.key} show={t.show} onClose={() => setT(x => ({ ...x, show: false }))} autohide delay={3200}
+          bg={t.err ? 'danger' : 'dark'} role="status" aria-live="polite">
+          <Toast.Body className="text-white d-flex justify-content-between align-items-center gap-3">
+            <span>{t.msg}</span>
+            <button type="button" className="btn-close btn-close-white" aria-label="Close" onClick={() => setT(x => ({ ...x, show: false }))} />
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
     </ToastCtx.Provider>
   );
 }
 
-/* ---------- atoms ---------- */
-export const Card = ({ head, className = '', children }) => (
-  <section className={`card ${className}`}>
-    {head ? <div className="card-head"><h2>{head}</h2></div> : null}
-    {children}
-  </section>
+/* ---------- layout atoms ---------- */
+export const Card = ({ head, className = '', children, bodyClassName = '' }) => (
+  <BCard className={`h-100 ${className}`}>
+    {head ? <BCard.Header className="bg-transparent py-3"><div className="card-head d-flex flex-wrap align-items-center gap-2 w-100">{head}</div></BCard.Header> : null}
+    <BCard.Body className={bodyClassName}>{children}</BCard.Body>
+  </BCard>
 );
 
+/** Responsive row of KPI tiles: 1 per row on phones, 2 on tablets, 4 on desktops. */
+export const KpiRow = ({ children }) => <Row xs={1} sm={2} xl={4} className="g-3">{children}</Row>;
+
 export const Kpi = ({ label, value, unit, sub, children }) => (
-  <div className="card kpi">
-    <div className="label">{label}</div>
-    <div className="value num">{value}{unit ? <small>{unit}</small> : null}</div>
-    <div className="sub">{sub}</div>
-    {children}
+  <Col>
+    <BCard className="kpi h-100">
+      <BCard.Body>
+        <div className="label">{label}</div>
+        <div className="value num">{value}{unit ? <small>{unit}</small> : null}</div>
+        <div className="sub">{sub}</div>
+        {children}
+      </BCard.Body>
+    </BCard>
+  </Col>
+);
+
+const PILL = {
+  good: ['success-subtle', 'success-emphasis'],
+  warn: ['warning-subtle', 'warning-emphasis'],
+  bad: ['danger-subtle', 'danger-emphasis'],
+  info: ['info-subtle', 'info-emphasis'],
+  neutral: ['secondary-subtle', 'secondary-emphasis'],
+};
+export const Pill = ({ kind = 'neutral', children }) => {
+  const [bg, text] = PILL[kind] || PILL.neutral;
+  return <Badge pill bg={bg} text={text} className="fw-semibold">{children}</Badge>;
+};
+export const sevKind = s => ({ critical: 'bad', high: 'bad', medium: 'warn', low: 'info' }[s] || 'neutral');
+
+export const Empty = ({ children }) => <div className="text-center text-secondary py-4 px-2">{children}</div>;
+
+export const Meter = ({ pct, cls = '', color }) => (
+  <div className="progress mt-2" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+    <div className={`progress-bar ${cls}`} style={{ width: `${pct}%`, ...(color ? { background: color } : {}) }} />
   </div>
 );
 
-export const Pill = ({ kind = 'neutral', children }) => <span className={`pill ${kind}`}>{children}</span>;
-export const sevKind = s => ({ critical: 'bad', high: 'bad', medium: 'warn', low: 'info' }[s] || 'neutral');
-export const Empty = ({ children }) => <div className="empty">{children}</div>;
-export const Meter = ({ pct, cls = '', color }) => (
-  <div className={`meter-bar ${cls}`}><i style={{ width: `${pct}%`, ...(color ? { background: color } : {}) }} /></div>
-);
 export const Swatch = ({ color }) => (
   <i style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 3, background: color, marginRight: 8 }} />
 );
@@ -60,35 +92,39 @@ export function Stars({ n }) {
 export function Table({ cols, rows }) {
   if (!rows.length) return null;
   return (
-    <div className="table-wrap">
-      <table>
-        <thead><tr>{cols.map((c, i) => <th key={i} className={c.r ? 'r' : ''}>{c.h}</th>)}</tr></thead>
-        <tbody>
-          {rows.map((r, ri) => (
-            <tr key={ri}>{r.map((c, i) => <td key={i} className={`${cols[i].r ? 'r num' : ''} ${cols[i].wrap ? 'wrap' : ''}`}>{c}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <BTable responsive hover size="sm" className="mb-0 align-middle">
+      <thead><tr>{cols.map((c, i) => <th key={i} className={c.r ? 'r' : ''}>{c.h}</th>)}</tr></thead>
+      <tbody>
+        {rows.map((r, ri) => (
+          <tr key={ri}>{r.map((c, i) => <td key={i} className={`${cols[i].r ? 'r num' : ''} ${cols[i].wrap ? 'wrap' : ''}`}>{c}</td>)}</tr>
+        ))}
+      </tbody>
+    </BTable>
   );
 }
 
 export function Seg({ options, value, onChange }) {
   return (
-    <div className="seg">
+    <ButtonGroup size="sm" aria-label="Filter">
       {options.map(o => {
         const [v, label] = Array.isArray(o) ? o : [o, title(o)];
-        return <button key={v} className={v === value ? 'on' : ''} onClick={() => onChange(v)}>{label}</button>;
+        return (
+          <Button key={v} className="btn-seg" variant={v === value ? 'primary' : 'outline-secondary'} onClick={() => onChange(v)}>{label}</Button>
+        );
       })}
-    </div>
+    </ButtonGroup>
   );
 }
 
 export function Skeleton() {
   return (
     <>
-      <div className="grid kpis"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div>
-      <div className="skeleton" style={{ height: 280 }} />
+      <Row xs={1} sm={2} xl={4} className="g-3 mb-3">
+        {[0, 1, 2, 3].map(i => (
+          <Col key={i}><BCard><BCard.Body><Placeholder as="div" animation="glow"><Placeholder xs={6} /><Placeholder xs={10} size="lg" /><Placeholder xs={8} /></Placeholder></BCard.Body></BCard></Col>
+        ))}
+      </Row>
+      <BCard><BCard.Body style={{ height: 260 }} className="d-flex align-items-center justify-content-center"><Spinner animation="border" variant="primary" /></BCard.Body></BCard>
     </>
   );
 }
@@ -97,27 +133,32 @@ export function Skeleton() {
 export function Loader({ res, children }) {
   if (res.error && !res.data) {
     return (
-      <div className="card empty">
-        Could not load this page.<br /><span className="small">{res.error.message}</span><br /><br />
-        <button className="btn" onClick={res.reload}>Retry</button>
-      </div>
+      <BCard>
+        <BCard.Body className="text-center text-secondary">
+          Could not load this page.<br /><span className="small">{res.error.message}</span><br /><br />
+          <Button variant="outline-secondary" onClick={res.reload}>Retry</Button>
+        </BCard.Body>
+      </BCard>
     );
   }
   if (!res.data) return <Skeleton />;
   return children(res.data);
 }
 
-/* ---------- modal (native <dialog>) ---------- */
-export function Modal({ onClose, children }) {
-  const ref = useRef();
-  useEffect(() => {
-    const d = ref.current;
-    if (d && !d.open) d.showModal();
-  }, []);
+/* ---------- forms ---------- */
+export const Field = ({ label, children, className = 'mb-3' }) => (
+  <div className={className}>
+    <label className="form-label small text-secondary mb-1">{label}</label>
+    {children}
+  </div>
+);
+
+/* ---------- modal ---------- */
+export function Modal({ onClose, children, size }) {
   return (
-    <dialog ref={ref} onCancel={e => { e.preventDefault(); onClose(); }}>
-      {children}
-    </dialog>
+    <BModal show onHide={onClose} centered size={size} backdrop="static" keyboard>
+      <BModal.Body className="p-4">{children}</BModal.Body>
+    </BModal>
   );
 }
 
@@ -126,11 +167,13 @@ export function PromptDialog({ heading, label, required, onSubmit, onCancel }) {
   return (
     <Modal onClose={onCancel}>
       <form onSubmit={e => { e.preventDefault(); onSubmit(text.trim()); }}>
-        <h2>{heading}</h2>
-        <label>{label}<textarea rows={3} required={required} value={text} onChange={e => setText(e.target.value)} autoFocus /></label>
-        <div className="actions">
-          <button type="button" className="btn" onClick={onCancel}>Cancel</button>
-          <button className="btn primary" type="submit">Confirm</button>
+        <h2 className="h5 mb-3">{heading}</h2>
+        <Field label={label}>
+          <textarea className="form-control" rows={3} required={required} value={text} onChange={e => setText(e.target.value)} autoFocus />
+        </Field>
+        <div className="d-flex justify-content-end gap-2">
+          <Button type="button" variant="outline-secondary" onClick={onCancel}>Cancel</Button>
+          <Button type="submit" variant="primary">Confirm</Button>
         </div>
       </form>
     </Modal>

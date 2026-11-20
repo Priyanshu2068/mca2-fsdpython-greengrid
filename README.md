@@ -16,7 +16,7 @@ Meter hardware is out of scope. Data arrives via a high-throughput idempotent in
 ## 2. Technical Stack
 - **Language & Runtime:** Python 3.11+
 - **Backend Framework:** Django 4.2 LTS & Django REST Framework (DRF)
-- **Frontend:** React 18 single-page app built with Vite (`frontend/`), talking to the REST API with same-origin session + CSRF auth
+- **Frontend:** React 18 single-page app built with Vite (`frontend/`) and styled with Bootstrap 5 (`react-bootstrap`), talking to the REST API with same-origin session + CSRF auth
 - **Database Engine:** PostgreSQL 16 using `psycopg 3`. Used in place of the MySQL suggested in the project brief, because ingestion, scheduled rollups and dashboards run concurrently, the data model relies on strict unique and foreign-key constraints, and the readings table is append-only time-series data that suits PostgreSQL's aggregation functions and BRIN indexes
 - **Query & Storage Optimisation:** `ON CONFLICT` upserts, `date_trunc` aggregate rollups, BRIN indices on reading timestamps
 - **API Documentation & Filtering:** `drf-spectacular` (OpenAPI 3.0 / Swagger UI at `/api/docs/`), `django-filter`
@@ -125,7 +125,7 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 | **Facilities** | `#/sites` | Facilities and meters; admins and field engineers can register meters and upload CSV readings |
 | **Users** | `#/users` | Admins and field engineers add users and choose which facilities they can see (admins: customers and field engineers; field engineers: customers for their own facilities). Admins can also deactivate users |
 
-Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, responsive layout.
+Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, and a responsive Bootstrap layout (fixed sidebar on desktops, slide-out menu on phones, KPI tiles that reflow from 1 to 4 columns, scrollable tables).
 
 All roles can view every page for their assigned facilities (admins see all facilities). What each role can *do* differs, and the backend enforces it:
 
@@ -147,7 +147,7 @@ frontend/
     ├── main.jsx, App.jsx # entry, shell, hash routing
     ├── api.js            # fetch wrapper (session + CSRF)
     ├── hooks.js          # useAsync, useHashRoute
-    ├── components/       # ui atoms, SVG charts, icons
+    ├── components/       # Bootstrap-based ui atoms, SVG charts, icons
     └── pages/            # one component per page above
 ```
 
