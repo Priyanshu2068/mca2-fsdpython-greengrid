@@ -106,12 +106,17 @@ class Command(BaseCommand):
                     facility=fac, building=b, name=name, energy_source=src, load_category=cat))
             self.stdout.write(f"Facility {fac.name} (id={fac.id})")
 
-            if not RawReading.objects.filter(meter__facility=fac).exists():
+            latest = RawReading.objects.filter(meter__facility=fac, meter__energy_source='grid').order_by('-timestamp').first()
+            if not latest:
                 # chunked: ingestion caps batches at INGESTION_MAX_BATCH_SIZE readings
                 for d in range(days, -1, -5):
                     chunk = min(5, d + 1)
                     start = (now - timedelta(days=d)).strftime('%Y-%m-%d')
                     call_command('run_simulator', facility_id=fac.id, days=chunk, start_date=start)
+            elif latest.timestamp < now - timedelta(hours=2):
+                days_behind = max(1, (now.date() - latest.timestamp.date()).days + 1)
+                start_str = (latest.timestamp.date() - timedelta(days=1)).strftime('%Y-%m-%d')
+                call_command('run_simulator', facility_id=fac.id, days=days_behind + 1, start_date=start_str)
 
             self._seed_dg_and_solar(fac, now, days)
 
