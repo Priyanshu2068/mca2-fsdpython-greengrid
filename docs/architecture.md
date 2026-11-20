@@ -14,7 +14,7 @@ flowchart TB
         WEB["Browser SPA / Web Clients\n(Session Auth + CSRF Token)"]
         EDGE["Edge Gateways & IoT DataSources\n(X-API-Key Header)"]
         CSV_CL["Field Engineers / Batch File Uploads\n(CSV Telemetry Files)"]
-        SIM_CL["Environmental Simulator\n(NASA POWER Driven CLI)"]
+        SIM_CL["Load Simulator\n(Management Command)"]
     end
 
     subgraph SecurityGateway["Security & Ingestion Boundary"]

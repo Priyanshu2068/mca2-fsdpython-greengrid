@@ -11,8 +11,8 @@ The diagram below illustrates the comprehensive lifecycle of energy data—from 
 ```mermaid
 flowchart TD
     subgraph Sources["1. Telemetry & Data Acquisition Sources"]
-        S1["NASA POWER API\n(Hourly Irradiance & Temp)"]
-        S2["Environmental Simulator\n(Replay past weather & loads)"]
+        S1["Weather Inputs\n(Irradiance & Temp)"]
+        S2["Load Simulator\n(Generates demo meter readings)"]
         S3["Field CSV Upload\n(Offline data logging)"]
         S4["Edge Gateways & Data Sources\n(Direct HTTP Post)"]
         S5["Manual Web Entry\n(Customer / Engineer portal)"]
