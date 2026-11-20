@@ -151,6 +151,18 @@ frontend/
     └── pages/            # one component per page above
 ```
 
+### Adding Users and Granting Facility Access
+
+Admins and field engineers can add users from the **Users** page. A temporary password is generated, shown once after the user is created, and cannot be retrieved later. Every grant and change is written to the audit log.
+
+| | Admin | Field engineer |
+| :--- | :--- | :--- |
+| Roles they can create | Customers and field engineers | Customers only |
+| Facilities they can grant | Any facility (optional) | Only their own, and at least one is required |
+| Users they see in the list | Everyone | Customers who share one of their facilities |
+| Edit someone's facility access | Yes | Yes, within their own facilities (access to other facilities is kept) |
+| Deactivate a user | Yes | No |
+
 ---
 
 ## 5. Project Review & Evaluation Directory
