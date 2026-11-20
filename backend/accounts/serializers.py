@@ -32,12 +32,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, required=True)
+    facility_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1), required=False, allow_empty=True, write_only=True)
 
     class Meta:
         model = CustomUser
         fields = [
             'id', 'email', 'password', 'first_name', 'last_name',
-            'role', 'phone', 'is_active'
+            'role', 'phone', 'is_active', 'facility_ids'
         ]
         read_only_fields = ['id']
 
@@ -46,6 +48,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if CustomUser.objects.filter(email=clean).exists():
             raise serializers.ValidationError("A user with this email address already exists.")
         return clean
+
+class FacilityAccessSerializer(serializers.Serializer):
+    facility_ids = serializers.ListField(child=serializers.IntegerField(min_value=1), allow_empty=True)
+
 
 class AuditLogSerializer(serializers.ModelSerializer):
     user_email = serializers.CharField(source='user.email', read_only=True, default=None)

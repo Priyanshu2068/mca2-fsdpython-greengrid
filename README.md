@@ -123,6 +123,7 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 | **Recommendations** | `#/recs` | Energy conservation measures with ₹ savings; accept, dismiss or mark implemented |
 | **Renewables & Carbon** | `#/solar` | Solar generation, self-consumption, emissions by source, grid outages |
 | **Facilities** | `#/sites` | Facilities and meters; admins and field engineers can register meters and upload CSV readings |
+| **Users** | `#/users` | Admins and field engineers add users and choose which facilities they can see (admins: customers and field engineers; field engineers: customers for their own facilities). Admins can also deactivate users |
 
 Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, responsive layout.
 
@@ -135,7 +136,8 @@ All roles can view every page for their assigned facilities (admins see all faci
 | Accept / dismiss recommendations | Yes | Yes | View only |
 | Record a utility bill (manual / emergency entry) | Yes | No | Yes (assigned facilities) |
 | Register meters, upload CSV readings | Yes | No | Yes |
-| Create buildings, manage users | Yes | No | No |
+| Add users and grant facility access | Yes (customers, field engineers) | No | Yes (customers, own facilities only) |
+| Create buildings, deactivate users | Yes | No | No |
 
 ```
 frontend/

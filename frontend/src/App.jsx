@@ -3,6 +3,7 @@ import { api, ensureCsrf, qs, setUnauthorizedHandler } from './api.js';
 import { AppCtx } from './context.js';
 import { useHashRoute } from './hooks.js';
 import { list, store, title } from './format.js';
+import { hasRole } from './context.js';
 import { Empty, Card, ToastProvider, useToast } from './components/ui.jsx';
 import { ICONS } from './components/Icons.jsx';
 import { Link } from './components/Link.jsx';
@@ -14,6 +15,7 @@ import Benchmark from './pages/Benchmark.jsx';
 import Recommendations from './pages/Recommendations.jsx';
 import Renewables from './pages/Renewables.jsx';
 import Facilities from './pages/Facilities.jsx';
+import Users from './pages/Users.jsx';
 
 const ROUTES = [
   { id: 'overview', name: 'Overview', Page: Overview },
@@ -23,12 +25,14 @@ const ROUTES = [
   { id: 'recs', name: 'Recommendations', Page: Recommendations },
   { id: 'solar', name: 'Renewables & Carbon', Page: Renewables },
   { id: 'sites', name: 'Facilities', Page: Facilities },
+  { id: 'users', name: 'Users', Page: Users, roles: ['admin', 'field_engineer'] },
 ];
 
 function Shell({ user, onLogout }) {
   const toast = useToast();
   const routeId = useHashRoute();
   const route = ROUTES.find(r => r.id === routeId) || ROUTES[0];
+  const allowed = !route.roles || hasRole(user, ...route.roles);
   const [facilities, setFacilities] = useState([]);
   const [fid, setFid] = useState(null);
   const [ready, setReady] = useState(false);
@@ -75,7 +79,7 @@ function Shell({ user, onLogout }) {
         <aside className={`sidebar${menuOpen ? ' open' : ''}`}>
           <div className="brand"><span className="logo" /><span>GreenGrid</span></div>
           <nav id="nav">
-            {ROUTES.map(r => (
+            {ROUTES.filter(r => !r.roles || hasRole(user, ...r.roles)).map(r => (
               <Link key={r.id} to={r.id} className={r.id === route.id ? 'active' : ''}>
                 {ICONS[r.id]}<span>{r.name}</span>
                 {r.id === 'alerts' && badge > 0 && <span className="badge">{badge}</span>}
@@ -102,7 +106,8 @@ function Shell({ user, onLogout }) {
           </header>
           <main className="view" tabIndex={-1}>
             {!ready ? null
-              : (!fid && route.id !== 'sites')
+              : !allowed ? <Card><Empty>Your role does not have access to this page.</Empty></Card>
+              : (!fid && route.id !== 'sites' && route.id !== 'users')
                 ? <Card><Empty>No facilities are assigned to your account.</Empty></Card>
                 : <Page key={`${route.id}:${fid}`} />}
           </main>

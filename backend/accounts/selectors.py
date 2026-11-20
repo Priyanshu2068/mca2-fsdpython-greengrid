@@ -29,3 +29,17 @@ def list_audit_logs(user_id=None, action=None, resource_type=None):
     if resource_type:
         qs = qs.filter(resource_type=resource_type)
     return qs
+
+
+def list_users_for(actor, role=None, search=None):
+    """
+    Users an actor may see in user management.
+    Admins see everyone; field engineers see only customers who share at least
+    one of their facilities.
+    """
+    from core.scoping import get_user_facility_ids
+    qs = list_users(role=role, search=search)
+    scope = get_user_facility_ids(actor)
+    if scope is None:
+        return qs
+    return qs.filter(role='customer', facility_assignments__facility_id__in=scope).distinct()

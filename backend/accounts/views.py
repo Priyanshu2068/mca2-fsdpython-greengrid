@@ -18,15 +18,18 @@ from accounts.serializers import (
     UserProfileSerializer,
     ChangePasswordSerializer,
     UserCreateSerializer,
+    FacilityAccessSerializer,
     AuditLogSerializer,
 )
 from accounts.services import (
     record_audit_log,
-    create_user_by_admin,
+    create_user_with_access,
+    set_user_facilities,
     change_user_password,
 )
-from accounts.selectors import list_users, list_audit_logs
-from core.permissions import IsAdminUser
+from accounts.selectors import list_users_for, list_audit_logs
+from core.permissions import IsAdminUser, IsAdminOrFieldEngineer
+from django.http import Http404
 
 class CSRFTokenView(APIView):
     """
@@ -139,31 +142,55 @@ class ChangePasswordView(APIView):
 
 class UserManagementViewSet(viewsets.ModelViewSet):
     """
-    Administrator API for provisioning and managing system users.
+    User provisioning. Administrators manage all users; field engineers can list and
+    onboard customers for their own facilities. Editing or deleting users stays admin-only.
     """
-    permission_classes = [IsAdminUser]
     serializer_class = UserProfileSerializer
+    shared_actions = ('list', 'create', 'set_facilities')
+
+    def get_permissions(self):
+        if self.action in self.shared_actions:
+            return [IsAdminOrFieldEngineer()]
+        return [IsAdminUser()]
 
     def get_queryset(self):
-        role = self.request.query_params.get('role')
-        search = self.request.query_params.get('search')
-        return list_users(role=role, search=search)
+        return list_users_for(
+            self.request.user,
+            role=self.request.query_params.get('role'),
+            search=self.request.query_params.get('search'),
+        )
 
     def create(self, request, *args, **kwargs):
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        user = create_user_by_admin(
-            admin_user=request.user,
-            email=serializer.validated_data['email'],
-            password=serializer.validated_data['password'],
-            role=serializer.validated_data['role'],
-            first_name=serializer.validated_data.get('first_name', ''),
-            last_name=serializer.validated_data.get('last_name', ''),
-            phone=serializer.validated_data.get('phone', ''),
-            ip_address=request.META.get('REMOTE_ADDR')
+        data = serializer.validated_data
+        user = create_user_with_access(
+            actor=request.user,
+            email=data['email'],
+            password=data['password'],
+            role=data['role'],
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+            phone=data.get('phone', ''),
+            facility_ids=data.get('facility_ids', []),
+            ip_address=request.META.get('REMOTE_ADDR'),
         )
         return Response(UserProfileSerializer(user).data, status=status.HTTP_201_CREATED)
+
+    def set_facilities(self, request, pk=None, *args, **kwargs):
+        """PUT /users/{id}/facilities/: replace the user's facility access within the caller's scope."""
+        try:
+            target = self.get_queryset().get(pk=pk)
+        except CustomUser.DoesNotExist:
+            raise Http404('User not found.')
+        serializer = FacilityAccessSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        set_user_facilities(
+            actor=request.user, target=target,
+            facility_ids=serializer.validated_data['facility_ids'],
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
+        return Response(UserProfileSerializer(target).data, status=status.HTTP_200_OK)
 
 class AuditLogListView(APIView):
     """

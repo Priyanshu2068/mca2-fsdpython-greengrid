@@ -46,8 +46,10 @@ Standard error codes:
 | `POST` | `/api/v1/accounts/logout/` | Authenticated | Clears session cookie and invalidates session |
 | `GET` | `/api/v1/accounts/me/` | Authenticated | Retrieves current logged-in user profile, role, and facility scopes |
 | `POST` | `/api/v1/accounts/change-password/` | Authenticated | Updates account password |
-| `GET` | `/api/v1/accounts/users/` | `admin` | Lists system users with filtering by role |
-| `POST` | `/api/v1/accounts/users/` | `admin` | Provisions a new customer or field engineer account |
+| `GET` | `/api/v1/accounts/users/` | `admin`, `field_engineer` | Lists users with filtering by role. Admins see everyone; field engineers see only customers who share one of their facilities |
+| `POST` | `/api/v1/accounts/users/` | `admin`, `field_engineer` | Provisions a user and grants facility access (`facility_ids`). Admins can create customers and field engineers (facilities optional). Field engineers can create customers only, for at least one of their own facilities (404 for any other facility) |
+| `PUT` | `/api/v1/accounts/users/{id}/facilities/` | `admin`, `field_engineer` | Replaces a user's facility access within the caller's scope. Access outside the caller's facilities is left untouched. Writes an `UPDATE_FACILITY_ACCESS` audit entry |
+| `PATCH` | `/api/v1/accounts/users/{id}/` | `admin` | Updates a profile or activates / deactivates a user |
 | `GET` | `/api/v1/accounts/audit-logs/` | `admin` | Ingestion and operational security audit log |
 
 ### `POST /api/v1/accounts/login/`

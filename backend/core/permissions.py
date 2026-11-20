@@ -78,3 +78,13 @@ def deny_unless_role(user, allowed_roles, message):
         {'error': {'status': 403, 'code': 'PERMISSION_DENIED', 'message': message}},
         status=status.HTTP_403_FORBIDDEN,
     )
+
+
+class IsAdminOrFieldEngineer(BasePermission):
+    """Allows access to administrators, superusers and field engineers."""
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user and user.is_authenticated and
+            (user.is_superuser or getattr(user, 'role', None) in ('admin', 'field_engineer'))
+        )
