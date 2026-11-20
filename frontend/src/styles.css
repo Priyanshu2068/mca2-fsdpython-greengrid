@@ -181,3 +181,8 @@ dialog .actions { justify-content: flex-end; }
 a { color: var(--brand); }
 
 td .actions { flex-wrap: nowrap; }
+
+/* React client additions */
+.tip { max-width: 240px; }
+dialog .actions { display: flex; }
+dialog label { display: grid; }
