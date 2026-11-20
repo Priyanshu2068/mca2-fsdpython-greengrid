@@ -26,7 +26,7 @@ const ROUTES = [
   { id: 'recs', name: 'Recommendations', Page: Recommendations },
   { id: 'solar', name: 'Renewables & Carbon', Page: Renewables },
   { id: 'sites', name: 'Facilities', Page: Facilities },
-  { id: 'users', name: 'Users', Page: Users, roles: ['admin', 'field_engineer'] },
+  { id: 'users', name: 'Users', Page: Users, roles: ['admin'] },
 ];
 
 function Shell({ user, onLogout }) {

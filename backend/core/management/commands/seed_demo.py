@@ -106,15 +106,14 @@ class Command(BaseCommand):
                     facility=fac, building=b, name=name, energy_source=src, load_category=cat))
             self.stdout.write(f"Facility {fac.name} (id={fac.id})")
 
-            if RawReading.objects.filter(meter__facility=fac).exists():
-                continue
-            # chunked: ingestion caps batches at INGESTION_MAX_BATCH_SIZE readings
-            for d in range(days, -1, -5):
-                chunk = min(5, d + 1)
-                start = (now - timedelta(days=d)).strftime('%Y-%m-%d')
-                call_command('run_simulator', facility_id=fac.id, days=chunk, start_date=start)
-            self._solar(fac, now, days)
-            self._events(fac, now)
+            if not RawReading.objects.filter(meter__facility=fac).exists():
+                # chunked: ingestion caps batches at INGESTION_MAX_BATCH_SIZE readings
+                for d in range(days, -1, -5):
+                    chunk = min(5, d + 1)
+                    start = (now - timedelta(days=d)).strftime('%Y-%m-%d')
+                    call_command('run_simulator', facility_id=fac.id, days=chunk, start_date=start)
+
+            self._seed_dg_and_solar(fac, now, days)
 
         call_command('rollup_hourly', hours_back=(days + 2) * 24)
         call_command('rollup_daily', days_back=days + 2)
@@ -141,6 +140,60 @@ class Command(BaseCommand):
         call_command('generate_recommendations')
         self.stdout.write(self.style.SUCCESS(
             f"Done. Demo accounts: admin@greengrid.test, customer@greengrid.test, engineer@greengrid.test / {DEMO_PASSWORD}"))
+
+    def _seed_dg_and_solar(self, fac, now, days):
+        self._solar(fac, now, days)
+        self._events(fac, now)
+
+        dg_meter = fac.meters.filter(energy_source='diesel_generator').first()
+        sol_meter = fac.meters.filter(energy_source='solar').first()
+        inc_meter = fac.meters.filter(load_category='main_incomer', energy_source='grid').first()
+
+        # DG readings during logged outages where fuel was used
+        if dg_meter and not RawReading.objects.filter(meter=dg_meter).exists():
+            dg_rows = []
+            for ev in GridEvent.objects.filter(facility=fac, fuel_consumed_litres__gt=0):
+                total_kwh = float(ev.fuel_consumed_litres) * 3.8
+                mins = int(ev.duration_minutes)
+                intervals = max(1, math.ceil(mins / 15))
+                kwh_per_int = total_kwh / intervals
+                kw_per_int = kwh_per_int * 4.0
+                curr_t = ev.start_time
+                for _ in range(intervals):
+                    dg_rows.append(RawReading(
+                        meter=dg_meter,
+                        timestamp=curr_t,
+                        energy_kwh=Decimal(str(round(kwh_per_int, 4))),
+                        active_power_kw=Decimal(str(round(kw_per_int, 4))),
+                        power_factor=Decimal('0.880'),
+                        voltage_v=Decimal('415.00')
+                    ))
+                    if inc_meter:
+                        RawReading.objects.filter(meter=inc_meter, timestamp=curr_t).update(
+                            voltage_v=Decimal('0.00'), active_power_kw=Decimal('0.0000'), energy_kwh=Decimal('0.0000')
+                        )
+                    curr_t += timedelta(minutes=15)
+            if dg_rows:
+                RawReading.objects.bulk_create(dg_rows, ignore_conflicts=True)
+
+        # Solar meter readings matching SolarGenerationReading
+        if sol_meter and not RawReading.objects.filter(meter=sol_meter).exists():
+            sol_readings = SolarGenerationReading.objects.filter(asset__facility=fac)
+            sol_rows = []
+            for sr in sol_readings:
+                kwh_15 = float(sr.generation_kwh) / 4.0
+                kw = float(sr.generation_kwh)
+                for step in range(4):
+                    sol_rows.append(RawReading(
+                        meter=sol_meter,
+                        timestamp=sr.timestamp + timedelta(minutes=15 * step),
+                        energy_kwh=Decimal(str(round(kwh_15, 4))),
+                        active_power_kw=Decimal(str(round(kw, 4))),
+                        power_factor=Decimal('1.000'),
+                        voltage_v=Decimal('415.00')
+                    ))
+            if sol_rows:
+                RawReading.objects.bulk_create(sol_rows, ignore_conflicts=True)
 
     def _solar(self, fac, now, days):
         asset, _ = SolarAsset.objects.get_or_create(array_identifier=f'{fac.code}-PV1', defaults=dict(
