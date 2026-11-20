@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react';
-import { Button, Col, Form, Row } from 'react-bootstrap';
 import { api } from '../api.js';
-import { useApp, hasRole } from '../context.js';
+import { useApp } from '../context.js';
 import { useAsync } from '../hooks.js';
 import { LOAD_NAMES, SOURCE_NAMES, list, nf, title } from '../format.js';
-import { Card, Empty, Field, Loader, Modal, Pill, Table, useToast } from '../components/ui.jsx';
+import { Card, Empty, Loader, Modal, Pill, Table, useToast } from '../components/ui.jsx';
 
 const SOURCES = [['grid', 'Utility Grid'], ['solar', 'Solar PV'], ['diesel_generator', 'Diesel Generator'], ['gas', 'Natural Gas'], ['water', 'Water']];
 const LOADS = [['main_incomer', 'Main Incomer'], ['hvac', 'HVAC & Chillers'], ['lighting', 'Lighting Circuits'], ['it_infrastructure', 'IT & Server Room'], ['auxiliary_pumps', 'Auxiliary Pumps'], ['elevators', 'Elevators'], ['ev_chargers', 'EV Chargers']];
@@ -28,18 +27,16 @@ function MeterDialog({ facility, onClose, onDone }) {
   return (
     <Modal onClose={onClose}>
       <form onSubmit={submit}>
-        <h2 className="h5 mb-1">Register Meter</h2>
-        <div className="text-secondary small mb-3">{facility.name}</div>
-        <Field label="Meter Name"><Form.Control required placeholder="e.g. Substation Feeder 2" value={f.name} onChange={set('name')} /></Field>
-        <Field label="Meter Identifier"><Form.Control required placeholder="e.g. MTR-FEEDER-02" value={f.meter_identifier} onChange={set('meter_identifier')} /></Field>
-        <Row className="g-3">
-          <Col sm={6}><Field label="Energy Source"><Form.Select value={f.energy_source} onChange={set('energy_source')}>{SOURCES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Form.Select></Field></Col>
-          <Col sm={6}><Field label="Load Category"><Form.Select value={f.load_category} onChange={set('load_category')}>{LOADS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Form.Select></Field></Col>
-        </Row>
-        <Field label="Physical Location"><Form.Control placeholder="e.g. Electrical Room B1" value={f.physical_location} onChange={set('physical_location')} /></Field>
-        <div className="d-flex justify-content-end gap-2">
-          <Button type="button" variant="outline-secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Registering…' : 'Register'}</Button>
+        <h2>Register Meter</h2>
+        <div className="muted small">{facility.name}</div>
+        <label>Meter Name<input required placeholder="e.g. Substation Feeder 2" value={f.name} onChange={set('name')} /></label>
+        <label>Meter Identifier<input required placeholder="e.g. MTR-FEEDER-02" value={f.meter_identifier} onChange={set('meter_identifier')} /></label>
+        <label>Energy Source<select value={f.energy_source} onChange={set('energy_source')}>{SOURCES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        <label>Load Category<select value={f.load_category} onChange={set('load_category')}>{LOADS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        <label>Physical Location<input placeholder="e.g. Electrical Room B1" value={f.physical_location} onChange={set('physical_location')} /></label>
+        <div className="actions">
+          <button type="button" className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn primary" type="submit" disabled={saving}>Register</button>
         </div>
       </form>
     </Modal>
@@ -51,7 +48,7 @@ export default function Facilities() {
   const toast = useToast();
   const fileRef = useRef();
   const [meterFor, setMeterFor] = useState(null);
-  const isEng = hasRole(user, 'admin', 'field_engineer');
+  const isEng = user && (user.role === 'admin' || user.role === 'field_engineer' || user.is_superuser);
   const res = useAsync(
     () => Promise.all(facilities.map(f => api(`facilities/${f.id}/meters/`).then(list).catch(() => []))),
     [facilities],
@@ -75,26 +72,26 @@ export default function Facilities() {
   return (
     <Loader res={res}>
       {meters => (
-        <div className="d-grid gap-3">
+        <>
           <input ref={fileRef} type="file" accept=".csv" hidden onChange={upload} />
           {facilities.map((f, i) => (
             <Card key={f.id} head={
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 w-100">
-                <span>{f.name} <span className="text-secondary small fw-normal">· {f.code}</span></span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div>{f.name} <span className="muted small">· {f.code}</span></div>
                 {isEng && (
-                  <span className="d-flex gap-2">
-                    <Button size="sm" variant="primary" onClick={() => setMeterFor(f)}>+ Register Meter</Button>
-                    <Button size="sm" variant="outline-secondary" onClick={() => fileRef.current.click()}>Upload CSV</Button>
-                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn small primary" onClick={() => setMeterFor(f)}>+ Register Meter</button>
+                    <button className="btn small ghost" onClick={() => fileRef.current.click()}>Upload CSV</button>
+                  </div>
                 )}
               </div>
             }>
-              <Row xs={2} md={4} className="g-3 mb-3">
-                <Col><div className="text-secondary small">Type</div><b>{title(f.facility_type)}</b></Col>
-                <Col><div className="text-secondary small">Location</div><b>{f.city}, {f.state}</b></Col>
-                <Col><div className="text-secondary small">Floor area</div><b className="num">{nf(f.gross_floor_area_sqm)} m²</b></Col>
-                <Col><div className="text-secondary small">Sanctioned demand</div><b className="num">{nf(f.sanctioned_demand_kva)} kVA</b></Col>
-              </Row>
+              <div className="grid kpis" style={{ marginBottom: 14 }}>
+                <div><div className="muted small">Type</div><b>{title(f.facility_type)}</b></div>
+                <div><div className="muted small">Location</div><b>{f.city}, {f.state}</b></div>
+                <div><div className="muted small">Floor area</div><b className="num">{nf(f.gross_floor_area_sqm)} m²</b></div>
+                <div><div className="muted small">Sanctioned demand</div><b className="num">{nf(f.sanctioned_demand_kva)} kVA</b></div>
+              </div>
               <Table
                 cols={[{ h: 'Meter' }, { h: 'ID' }, { h: 'Source' }, { h: 'Load' }, { h: 'Location' }, { h: 'Active' }]}
                 rows={(meters[i] || []).map(m => [
@@ -105,7 +102,7 @@ export default function Facilities() {
             </Card>
           ))}
           {meterFor && <MeterDialog facility={meterFor} onClose={() => setMeterFor(null)} onDone={() => { setMeterFor(null); res.reload(); }} />}
-        </div>
+        </>
       )}
     </Loader>
   );

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Alert, Button, ButtonGroup } from 'react-bootstrap';
 import { api, qs } from '../api.js';
 import { useApp, hasRole } from '../context.js';
 import { useAsync } from '../hooks.js';
@@ -37,11 +36,11 @@ export default function Alerts() {
   const rows = res.data || [];
   return (
     <Card head="Anomaly alerts">
-      <div className="mb-3">
+      <div className="toolbar" style={{ marginBottom: 12 }}>
         <Seg value={status} onChange={setStatus} options={['open', 'acknowledged', 'resolved', 'all']} />
       </div>
-      {!canAct && <Alert variant="secondary" className="small py-2">View only: alerts are handled by administrators and field engineers.</Alert>}
-      {res.error && <Alert variant="danger" className="small">{res.error.message}</Alert>}
+      {!canAct && <div className="muted small" style={{ marginBottom: 10 }}>View only: alerts are handled by administrators and field engineers.</div>}
+      {res.error && <div className="form-error" role="alert">{res.error.message}</div>}
       {res.data && (rows.length ? (
         <Table
           cols={[{ h: 'Severity' }, { h: 'Type' }, { h: 'Meter' }, { h: 'Details', wrap: 1 }, { h: 'Detected' }, { h: 'Status' }, ...(canAct ? [{ h: '' }] : [])]}
@@ -50,15 +49,15 @@ export default function Alerts() {
             title(a.anomaly_type), a.meter_identifier, a.reason, dt(a.detected_at),
             <Pill kind={a.status === 'open' ? 'warn' : a.status === 'resolved' ? 'good' : 'neutral'}>{title(a.status)}</Pill>,
             ...(!canAct ? [] : [(a.status === 'open' || a.status === 'acknowledged') ? (
-              <ButtonGroup size="sm">
-                {a.status === 'open' && <Button variant="outline-secondary" disabled={busy === a.id} onClick={() => act(a, 'acknowledged')}>Acknowledge</Button>}
-                <Button variant="outline-success" disabled={busy === a.id} onClick={() => act(a, 'resolved')}>Resolve</Button>
-                <Button variant="outline-secondary" disabled={busy === a.id} onClick={() => act(a, 'false_positive')}>False positive</Button>
-              </ButtonGroup>
+              <div className="actions">
+                {a.status === 'open' && <button className="btn small" disabled={busy === a.id} onClick={() => act(a, 'acknowledged')}>Acknowledge</button>}
+                <button className="btn small" disabled={busy === a.id} onClick={() => act(a, 'resolved')}>Resolve</button>
+                <button className="btn small ghost" disabled={busy === a.id} onClick={() => act(a, 'false_positive')}>False positive</button>
+              </div>
             ) : '']),
           ])} />
       ) : <Empty>{status === 'open' ? '✓ No open alerts. Everything looks healthy.' : 'No alerts match this filter.'}</Empty>)}
-      {!res.data && !res.error && <div className="placeholder-glow"><span className="placeholder col-12" style={{ height: 120 }} /></div>}
+      {!res.data && !res.error && <div className="skeleton" />}
       {prompt && (
         <PromptDialog
           heading={prompt.action === 'resolved' ? 'Resolve alert' : 'Mark as false positive'}
