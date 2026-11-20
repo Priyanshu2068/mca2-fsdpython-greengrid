@@ -35,7 +35,7 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 | :--- | :--- | :--- |
 | **Overview** | `#/overview` | Today's consumption, month-to-date, peak demand vs. sanctioned kVA, energy mix, load breakdown, 24-hour / 30-day trends |
 | **Alerts** | `#/alerts` | Anomaly alerts with acknowledge / resolve / false-positive workflow |
-| **Billing** | `#/billing` | Utility bills and bill-vs-metered reconciliation |
+| **Billing** | `#/billing` | Utility bills and bill-vs-metered reconciliation; admins and field engineers can record a bill manually for emergency or offline entry |
 | **Benchmarking** | `#/benchmark` | EUI, BEE star rating, percentile and facility ranking |
 | **Recommendations** | `#/recs` | Energy conservation measures with ₹ savings; accept, dismiss or mark implemented |
 | **Renewables & Carbon** | `#/solar` | Solar generation, self-consumption, emissions by source, grid outages |

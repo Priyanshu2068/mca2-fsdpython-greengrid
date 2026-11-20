@@ -273,7 +273,7 @@ All dashboard endpoints read exclusively from pre-aggregated rollups and guarant
 | `GET` | `/api/v1/billing/providers/` | Scoped Roles | Indian electricity supply companies (DISCOMs) |
 | `GET` | `/api/v1/billing/tariffs/` | Scoped Roles | Commercial HT tariff rates, peak multipliers, PF penalties |
 | `GET` | `/api/v1/billing/bills/` | Scoped Roles | Utility bills list with status and effective cost/kWh |
-| `POST` | `/api/v1/billing/bills/` | `admin` | Records a new monthly utility bill |
+| `POST` | `/api/v1/billing/bills/` | `admin`, `field_engineer` | Records a new monthly utility bill (manual / emergency entry). Engineers are limited to their assigned facilities (404 otherwise) |
 | `GET` | `/api/v1/billing/reconciliations/` | Scoped Roles | Metered vs. billed discrepancy audit records |
 
 ### `GET /api/v1/billing/reconciliations/?bill_id=3`
