@@ -59,11 +59,11 @@ export default function Benchmark() {
                 </Card>
               </div>
             ) : <Card><Empty>No benchmark has been computed for this facility yet.</Empty></Card>}
-            <Card head={<>Facility ranking <span className="muted small">· other facilities are shown anonymously</span></>}>
+            <Card head={<>Facility ranking {R.some(r => r.facility === null) && <span className="muted small">· facilities you can't access are shown anonymously</span>}</>}>
               {R.length ? (
                 <Table
                   cols={[{ h: '#' }, { h: 'Facility' }, { h: 'Type' }, { h: 'EUI', r: 1 }, { h: 'Percentile', r: 1 }, { h: 'Rating' }]}
-                  rows={R.map((r, i) => [i + 1, <><b>{r.facility_name}</b>{r.facility === fid && <> <Pill kind="good">Your facility</Pill></>}</>, title(r.facility_type), nf(r.calculated_eui_kwh_sqm_year, 1), nf(r.national_percentile), <Stars n={r.star_rating} />])} />
+                  rows={R.map((r, i) => [i + 1, <><b>{r.facility_name}</b>{r.facility === fid && <> <Pill kind="info">Selected</Pill></>}</>, title(r.facility_type), nf(r.calculated_eui_kwh_sqm_year, 1), nf(r.national_percentile), <Stars n={r.star_rating} />])} />
               ) : <Empty>No data.</Empty>}
             </Card>
             <Card head={<>BEE benchmark standards <span className="muted small">· kWh/m²/year</span></>}>
