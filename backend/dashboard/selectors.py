@@ -60,6 +60,9 @@ def get_facility_kpi_summary(facility_id: int, user) -> dict:
     sanctioned_kva = facility.sanctioned_demand_kva or Decimal('500.00')
     demand_utilization_pct = round((peak_demand_kw / sanctioned_kva) * Decimal('100.0'), 2)
 
+    # Newest hour that has data (lets the UI say "no readings yet today" instead of showing a bare 0)
+    latest_bucket = HourlyRollup.objects.filter(meter_id__in=incomer_meter_ids).aggregate(m=Max('bucket_start'))['m']
+
     # 5. Active Anomaly Alerts count
     active_anomalies_count = AnomalyAlert.objects.filter(facility=facility, status='open').count()
 
@@ -67,6 +70,7 @@ def get_facility_kpi_summary(facility_id: int, user) -> dict:
         'facility_id': facility.id,
         'facility_name': facility.name,
         'as_of': now_local.isoformat(),
+        'latest_data_at': timezone.localtime(latest_bucket).isoformat() if latest_bucket else None,
         'metrics': {
             'today_consumption_kwh': today_kwh,
             'yesterday_same_time_kwh': yesterday_kwh,

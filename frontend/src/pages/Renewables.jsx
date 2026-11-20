@@ -41,7 +41,7 @@ export default function Renewables() {
             <div className="grid cols-3">
               <Card head={<>Solar generation <span className="muted small">· latest hourly readings</span></>}>
                 <LineChart type="bar" labels={readings.map(g => g.timestamp)} fmt={v => nf(v)} label="Hourly solar generation"
-                  xTick={l => new Date(l).toLocaleString('en-IN', { day: '2-digit', month: 'short' })} tipLabel={dt}
+                  xTick={l => new Date(l).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })} tipLabel={dt}
                   series={[{ name: 'Generation (kWh)', color: 'var(--c3)', values: readings.map(g => num(g.generation_kwh)) }]} />
               </Card>
               <Card head="Emissions by source">

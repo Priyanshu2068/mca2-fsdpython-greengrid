@@ -218,9 +218,14 @@ class Command(BaseCommand):
         SolarGenerationReading.objects.bulk_create(rows, ignore_conflicts=True)
 
     def _events(self, fac, now):
+        # idempotent: the demo grid events are created once per facility
+        if GridEvent.objects.filter(facility=fac, notes='Auto-logged by demo seed').exists():
+            return
         for days_ago, kind, mins, fuel in [(21, 'grid_outage', 95, 140), (9, 'voltage_sag', 1, 0),
                                            (4, 'grid_outage', 40, 62), (2, 'frequency_aberration', 3, 0)]:
             st = now - timedelta(days=days_ago, hours=3)
+            # align to the 15-minute meter grid so the outage lines up with the readings
+            st = st.replace(minute=(st.minute // 15) * 15, second=0, microsecond=0)
             GridEvent.objects.create(facility=fac, event_type=kind, start_time=st,
                                      end_time=st + timedelta(minutes=mins), duration_minutes=mins,
                                      fuel_consumed_litres=fuel, grid_restored=True,

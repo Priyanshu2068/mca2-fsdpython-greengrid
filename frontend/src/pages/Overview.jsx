@@ -67,14 +67,17 @@ export default function Overview() {
         }));
         const breakdown = load.breakdown || [];
         const maxPct = Math.max(1, ...breakdown.map(b => num(b.percentage)));
+        // No readings today (a new day just started, or data stopped arriving): explain it instead of showing 0 / -100%
+        const noToday = num(m.today_consumption_kwh) === 0;
+        const lastData = sum.latest_data_at ? `Latest data: ${dt(sum.latest_data_at)}` : 'No data received yet';
         return (
           <>
             <div className="grid kpis">
               <Kpi label="Consumption today" value={nf(m.today_consumption_kwh)} unit="kWh"
-                sub={<><span className={`delta ${ch > 0 ? 'up' : 'down'}`}>{ch > 0 ? '▲' : '▼'} {nf(Math.abs(ch), 1)}%</span> vs yesterday ({nf(m.yesterday_same_time_kwh)} kWh)</>} />
+                sub={noToday ? <>No readings yet today<br />{lastData}</> : <><span className={`delta ${ch > 0 ? 'up' : 'down'}`}>{ch > 0 ? '▲' : '▼'} {nf(Math.abs(ch), 1)}%</span> vs yesterday ({nf(m.yesterday_same_time_kwh)} kWh)</>} />
               <Kpi label="Month to date" value={nf(num(m.month_to_date_kwh) / 1000, 1)} unit="MWh" sub={facility.name} />
               <Kpi label="Peak demand today" value={nf(m.current_peak_demand_kw)} unit="kW"
-                sub={`${nf(util, 1)}% of ${nf(m.sanctioned_demand_kva)} kVA sanctioned`}>
+                sub={noToday ? `No readings yet today · ${nf(m.sanctioned_demand_kva)} kVA sanctioned` : `${nf(util, 1)}% of ${nf(m.sanctioned_demand_kva)} kVA sanctioned`}>
                 <Meter cls={utilCls} pct={Math.min(100, util)} />
               </Kpi>
               <Kpi label="Open anomalies" value={m.active_anomalies_count}

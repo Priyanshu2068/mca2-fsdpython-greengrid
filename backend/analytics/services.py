@@ -210,7 +210,10 @@ def run_anomaly_detection() -> list:
             generated_alerts.append(alert)
 
     # --- Rule 4: Meter Silent (> 2 Hours) ---
-    active_meters = Meter.objects.filter(is_active=True).select_related('facility')
+    # Solar meters are legitimately idle at night and diesel generators until an outage,
+    # so only continuously-reporting meters can be "silent".
+    active_meters = Meter.objects.filter(is_active=True).exclude(
+        energy_source__in=('solar', 'diesel_generator')).select_related('facility')
     two_hours_ago = now - timedelta(hours=2)
     for m in active_meters:
         last_reading = RawReading.objects.filter(meter=m).order_by('-timestamp').first()
