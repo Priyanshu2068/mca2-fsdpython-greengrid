@@ -1,12 +1,13 @@
 {
   "rewrites": [
     {
-      "source": "/api/:match*",
-      "destination": "https://mca2-fsdpython-greengrid.onrender.com/api/:match*"
+      "source": "/api/:path*",
+      "destination": "https://mca2-fsdpython-greengrid.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
 }
+
