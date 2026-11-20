@@ -1,7 +1,7 @@
 # GreenGrid Comprehensive Verification & Test Execution Report
 
 **Project:** GreenGrid: Smart Energy Management for Tomorrow's Needs (P02)  
-**Milestone:** Final Production Release `v1.0.0`  
+**Milestone:** Final Production Release `v1.0.0` plus post-release enhancements  
 **Test Suite Framework:** `pytest` 9.2.0, `pytest-django` 4.14.0, Python 3.13.13, Django 4.2.30 LTS  
 **Author:** Priyanshu  
 **Repository:** [https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git](https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git)
@@ -10,13 +10,13 @@
 
 ## 1. Executive Summary
 
-A comprehensive automated test suite of **52 unit, integration, and end-to-end regression tests** was executed across all 8 functional modules of the GreenGrid backend architecture.
+A comprehensive automated test suite of **92 unit, integration, and end-to-end regression tests** was executed across all 8 functional modules of the GreenGrid backend architecture.
 
-- **Total Test Cases Executed:** 52
-- **Passing Tests:** 52 (100%)
+- **Total Test Cases Executed:** 92
+- **Passing Tests:** 92 (100%)
 - **Failing Tests:** 0 (0%)
 - **Errors / Flaky Tests:** 0
-- **Execution Time:** ~47.6 seconds
+- **Execution Time:** ~166 seconds on PostgreSQL 16
 - **Pass Rate:** **100.0%**
 
 ---
@@ -25,18 +25,18 @@ A comprehensive automated test suite of **52 unit, integration, and end-to-end r
 
 | Module Name | App Directory | Test Count | Coverage & Focus Areas | Result |
 | :--- | :--- | :---: | :--- | :---: |
-| **Users & Access** | `backend/accounts/` | 9 | Session auth, CSRF validation, RBAC, password lifecycle, admin user management, audit logging | **PASSED** |
-| **Facilities & Assets** | `backend/facilities/` | 5 | Multi-tenant scoping, meter inventory, SHA-256 API key issuance & rotation, 404 security checks | **PASSED** |
+| **Users & Access** | `backend/accounts/` | 29 | Session auth, CSRF validation, RBAC, password lifecycle, admin user management, audit logging | **PASSED** |
+| **Facilities & Assets** | `backend/facilities/` | 13 | Multi-tenant scoping, meter inventory, SHA-256 API key issuance & rotation, 404 security checks | **PASSED** |
 | **Telemetry Ingestion** | `backend/ingestion/` | 5 | Idempotent bulk upsert (`ON CONFLICT DO NOTHING`), 5000 batch limit, CSV parsing pipeline | **PASSED** |
 | **Weather Simulator** | `backend/simulator/` | 2 | daily temperature and solar model, 15-min diurnal synthetic load curve generator | **PASSED** |
-| **Energy Analytics** | `backend/analytics/` | 6 | Incremental 48h hourly rollups, TOD peak/off-peak daily rollups, 4 anomaly detection rules | **PASSED** |
-| **Executive Dashboards** | `backend/dashboard/` | 4 | Sub-second KPI summaries (<1s latency), 24h & 30d trends, energy mix, load category breakdown | **PASSED** |
-| **Utility Billing** | `backend/billing/` | 3 | Commercial HT tariffs, effective cost per kWh (₹/kWh), billed vs. metered tolerance reconciliation | **PASSED** |
+| **Energy Analytics** | `backend/analytics/` | 10 | Incremental 48h hourly rollups, TOD peak/off-peak daily rollups, 4 anomaly detection rules | **PASSED** |
+| **Executive Dashboards** | `backend/dashboard/` | 5 | Sub-second KPI summaries (<1s latency), 24h & 30d trends, energy mix, load category breakdown | **PASSED** |
+| **Utility Billing** | `backend/billing/` | 6 | Commercial HT tariffs, effective cost per kWh (₹/kWh), billed vs. metered tolerance reconciliation | **PASSED** |
 | **Building Benchmarking** | `backend/benchmarking/` | 3 | EUI ($\text{kWh/m}^2/\text{yr}$), BEE 1–5 Star Ratings, peer ranking leaderboard, `compute_benchmarks` | **PASSED** |
-| **ECM Recommendations** | `backend/recommendations/` | 4 | 5 explainable deterministic rules, ₹ savings modeling, accept/dismiss lifecycle, scoping | **PASSED** |
+| **ECM Recommendations** | `backend/recommendations/` | 7 | 5 explainable deterministic rules, ₹ savings modeling, accept/dismiss lifecycle, scoping | **PASSED** |
 | **Renewables & Carbon** | `backend/renewables/` | 5 | Solar PV generation, Performance Ratio (PR), self-consumption %, CEA Scope 2 carbon accounting | **PASSED** |
-| **System Core & Security** | `backend/core/` | 6 | Unified error envelope (`{"error": ...}`), health check (`/api/v1/health/`), Swagger & OpenAPI schema | **PASSED** |
-| **TOTAL** | **All Apps** | **52** | **Full System Regression Suite** | **100% PASSED** |
+| **System Core & Security** | `backend/core/` | 7 | Unified error envelope (`{"error": ...}`), health check (`/api/v1/health/`), Swagger & OpenAPI schema | **PASSED** |
+| **TOTAL** | **All Apps** | **92** | **Full System Regression Suite** | **100% PASSED** |
 
 ---
 
@@ -116,7 +116,18 @@ A comprehensive automated test suite of **52 unit, integration, and end-to-end r
 - `test_openapi_schema_endpoint`: Validates OpenAPI 3.0 schema generation at `GET /api/schema/`.
 - `test_swagger_ui_endpoint`: Validates interactive Swagger UI rendering at `GET /api/docs/`.
 
+### 3.12. Post-release Enhancements (`accounts`, `facilities`, `billing`, `analytics`, `recommendations`, `benchmarking`, `dashboard`, `core`)
+- **User onboarding and facility access (17 tests, `accounts/tests/test_user_access.py`):** admins create customers and field engineers with facility access; field engineers create customers only, only for their own facilities (404 for any other facility) and must pick at least one; unknown facilities and duplicate emails are rejected; admins see all users while engineers see only customers who share a facility; facility access can be replaced within the caller's own scope while access to other facilities is kept; customers cannot create users or edit access; only admins can deactivate users; every grant is audit-logged.
+- **Password rules (3 new tests, `accounts/tests/test_auth.py`):** wrong current password, reuse of the current password and too-short passwords are rejected; the session stays signed in after a successful change.
+- **Facility creation (8 tests, `facilities/tests/test_facility_create.py`):** an admin creates a facility and gets the saved object back with an upper-cased code and an audit entry; duplicate codes and invalid sizes (zero or negative area, zero demand, more than 168 operating hours) are rejected; field engineers and customers receive HTTP 403.
+- **Manual bill entry (3 tests, `billing/tests/test_billing.py`):** a field engineer can record a bill for an assigned facility (201), gets 404 for an unassigned facility, and a customer gets 403.
+- **Role rules (6 tests):** alerts can be updated by admins and field engineers but not customers; recommendations can be accepted or dismissed by admins and customers but not field engineers.
+- **Anonymised peer ranking (assertions in `test_benchmarking_api_endpoints`):** a customer sees their own facility in full while other facilities appear as `Peer facility #N` with name, code, id, floor area and absolute energy removed; admins still see every facility.
+- **Idle solar and diesel meters (1 test, `analytics/tests/test_anomalies.py`):** meters that are idle by design are not reported as silent, while a grid meter that stopped reporting still is.
+- **Dashboard freshness (1 test):** the KPI summary reports `latest_data_at`, or null for a facility with no data yet. The existing KPI test was also made independent of the time of day.
+- **Demo seed (1 test, `core/tests/test_seed_events.py`):** demo grid events are created once and aligned to the 15-minute meter grid even if the seed is re-run.
+
 ---
 
 ## 4. Verification Conclusion
-All 52 automated tests passed without failure or regression. The GreenGrid backend is fully verified, mathematically sound, securely scoped, and ready for release `v1.0.0`.
+All 92 automated tests passed without failure or regression. The GreenGrid backend is fully verified, mathematically sound, securely scoped, and ready for release `v1.0.0`.

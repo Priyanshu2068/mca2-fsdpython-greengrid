@@ -191,7 +191,7 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 | **Seed Data Fixtures** | [`database/seed_data.sql`](database/seed_data.sql) | Comprehensive Indian commercial facility dataset (2024–2026) with master records, readings, and edge cases |
 | **REST API Specification** | [`docs/api-spec.md`](docs/api-spec.md) | Comprehensive endpoint catalog covering all 8 modules, payload schemas, and response formats |
 | **Agile Backlog & Stories** | [`docs/user-stories.md`](docs/user-stories.md) | Granular user stories (P02-US01 to P02-US23) with acceptance criteria, priority, and 90-hour work allocation |
-| **Comprehensive Test Report** | [`docs/test-report.md`](docs/test-report.md) | Automated regression test execution report: 52 passing tests (100% pass rate) across all 8 modules |
+| **Comprehensive Test Report** | [`docs/test-report.md`](docs/test-report.md) | Automated regression test execution report: 92 passing tests (100% pass rate) across all 8 modules |
 | **Phase 0 Review** | [`docs/sprint-0-review.md`](docs/sprint-0-review.md) | Verification and design sign-off for Phase 0 (Tag `v0.1.0`) |
 | **Phase 1 Review** | [`docs/sprint-1-review.md`](docs/sprint-1-review.md) | Verification report for Phase 1 Foundation, Ingestion & Analytics (Tag `v0.2.0`) |
 | **Phase 2 Review** | [`docs/sprint-2-review.md`](docs/sprint-2-review.md) | Verification report for Phase 2 Dashboards, Utility Billing & Benchmarking (Tag `v0.3.0`) |
