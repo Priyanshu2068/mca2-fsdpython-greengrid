@@ -58,6 +58,8 @@ def change_user_password(user, old_password, new_password, ip_address=None):
 
     if len(new_password) < 8:
         raise ValidationError({'new_password': ['Password must be at least 8 characters long.']})
+    if new_password == old_password:
+        raise ValidationError({'new_password': ['New password must be different from the current password.']})
 
     user.set_password(new_password)
     user.save(update_fields=['password'])

@@ -18,6 +18,11 @@ class FacilitySerializer(serializers.ModelSerializer):
             'buildings_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'meters_count', 'buildings_count', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'gross_floor_area_sqm': {'min_value': 1},
+            'sanctioned_demand_kva': {'min_value': 1},
+            'operating_hours_per_week': {'min_value': 1, 'max_value': 168},
+        }
 
 class BuildingSerializer(serializers.ModelSerializer):
     facility_id = serializers.PrimaryKeyRelatedField(read_only=True, source='facility')

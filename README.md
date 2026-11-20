@@ -122,7 +122,7 @@ The `frontend/` directory contains a React 18 + Vite single-page application. In
 | **Benchmarking** | `#/benchmark` | EUI, BEE star rating, percentile and facility ranking (facilities you are not assigned to appear anonymously as "Peer facility #N") |
 | **Recommendations** | `#/recs` | Energy conservation measures with ₹ savings; accept, dismiss or mark implemented |
 | **Renewables & Carbon** | `#/solar` | Solar generation, self-consumption, emissions by source, grid outages |
-| **Facilities** | `#/sites` | Facilities and meters; admins and field engineers can register meters and upload CSV readings |
+| **Facilities** | `#/sites` | Facilities and meters; admins can add a facility, and admins and field engineers can register meters and upload CSV readings |
 | **Users** | `#/users` | Admins and field engineers add users and choose which facilities they can see (admins: customers and field engineers; field engineers: customers for their own facilities). Admins can also deactivate users |
 
 Features: role-aware login (admin, customer, field engineer), facility switcher, light/dark theme, and a responsive layout that works from phones to desktops. The dashboard, alerts, billing and renewables pages refresh themselves every 30 seconds while the tab is open (a "Live" indicator in the top bar shows the last update, and the refresh button updates immediately). Open forms and dialogs are not interrupted by a refresh.
@@ -137,7 +137,9 @@ All roles can view every page for their assigned facilities (admins see all faci
 | Record a utility bill (manual / emergency entry) | Yes | No | Yes (assigned facilities) |
 | Register meters, upload CSV readings | Yes | No | Yes |
 | Add users and grant facility access | Yes (customers, field engineers) | No | Yes (customers, own facilities only) |
+| Add a facility | Yes | No | No |
 | Create buildings, deactivate users | Yes | No | No |
+| Change own password (sidebar) | Yes | Yes | Yes |
 
 ```
 frontend/

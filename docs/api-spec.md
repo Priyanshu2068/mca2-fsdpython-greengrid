@@ -45,7 +45,7 @@ Standard error codes:
 | `POST` | `/api/v1/accounts/login/` | Public | Authenticates user credentials and establishes Django session |
 | `POST` | `/api/v1/accounts/logout/` | Authenticated | Clears session cookie and invalidates session |
 | `GET` | `/api/v1/accounts/me/` | Authenticated | Retrieves current logged-in user profile, role, and facility scopes |
-| `POST` | `/api/v1/accounts/change-password/` | Authenticated | Updates account password |
+| `POST` | `/api/v1/accounts/change-password/` | Authenticated | Updates the caller's own password. Requires the current password; the new password must be at least 8 characters and different from the current one. The session stays signed in |
 | `GET` | `/api/v1/accounts/users/` | `admin`, `field_engineer` | Lists users with filtering by role. Admins see everyone; field engineers see only customers who share one of their facilities |
 | `POST` | `/api/v1/accounts/users/` | `admin`, `field_engineer` | Provisions a user and grants facility access (`facility_ids`). Admins can create customers and field engineers (facilities optional). Field engineers can create customers only, for at least one of their own facilities (404 for any other facility) |
 | `PUT` | `/api/v1/accounts/users/{id}/facilities/` | `admin`, `field_engineer` | Replaces a user's facility access within the caller's scope. Access outside the caller's facilities is left untouched. Writes an `UPDATE_FACILITY_ACCESS` audit entry |
@@ -85,7 +85,7 @@ Standard error codes:
 | Method | Endpoint | Allowed Roles | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/facilities/` | `admin`, `customer`, `field_engineer` | Lists facilities scoped to user's role |
-| `POST` | `/api/v1/facilities/` | `admin` | Provisions a new commercial facility |
+| `POST` | `/api/v1/facilities/` | `admin` | Provisions a new commercial facility. The code is normalised to upper case and must be unique; floor area and sanctioned demand must be at least 1 and operating hours between 1 and 168. Returns the created facility and writes a `CREATE_FACILITY` audit entry |
 | `GET` | `/api/v1/facilities/{id}/` | Scoped Roles | Detailed facility profile, square footage, demand limit |
 | `GET` | `/api/v1/facilities/{id}/buildings/` | Scoped Roles | Lists buildings contained in facility |
 | `GET` | `/api/v1/facilities/{id}/meters/` | Scoped Roles | Lists sub-meters with source and load category |

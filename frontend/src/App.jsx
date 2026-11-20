@@ -7,6 +7,7 @@ import { hasRole } from './context.js';
 import { Empty, Card, ToastProvider, useToast } from './components/ui.jsx';
 import { ICONS } from './components/Icons.jsx';
 import { Link } from './components/Link.jsx';
+import ChangePasswordDialog from './components/ChangePassword.jsx';
 import Login from './pages/Login.jsx';
 import Overview from './pages/Overview.jsx';
 import Alerts from './pages/Alerts.jsx';
@@ -38,6 +39,7 @@ function Shell({ user, onLogout }) {
   const [ready, setReady] = useState(false);
   const [badge, setBadge] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
   const live = useLiveTick(30000);
 
   useEffect(() => {
@@ -52,6 +54,20 @@ function Shell({ user, onLogout }) {
     return () => { alive = false; };
   }, [toast]);
 
+  /** Reloads the facility list (e.g. after an admin adds one); optionally selects a facility id. */
+  const refreshFacilities = useCallback(async (selectId) => {
+    try {
+      const fs = list(await api('facilities/?page_size=200'));
+      setFacilities(fs);
+      setFid(cur => {
+        const next = selectId && fs.find(f => f.id === selectId) ? selectId : (fs.find(f => f.id === cur) ? cur : (fs[0] && fs[0].id) || null);
+        if (next) store.set('gg.fid', next);
+        return next;
+      });
+      return fs;
+    } catch (e) { toast(e.message, true); return []; }
+  }, [toast]);
+
   const refreshBadge = useCallback(async () => {
     if (!fid) return;
     try {
@@ -64,7 +80,7 @@ function Shell({ user, onLogout }) {
   useEffect(() => { document.title = `${route.name} · GreenGrid`; setMenuOpen(false); }, [route]);
 
   const facility = facilities.find(f => f.id === fid) || {};
-  const ctx = useMemo(() => ({ user, facilities, fid, facility, refreshBadge, tick: live.tick }), [user, facilities, fid, facility, refreshBadge, live.tick]);
+  const ctx = useMemo(() => ({ user, facilities, fid, facility, refreshBadge, refreshFacilities, tick: live.tick }), [user, facilities, fid, facility, refreshBadge, refreshFacilities, live.tick]);
   const changeFacility = e => { const v = Number(e.target.value); setFid(v); store.set('gg.fid', v); };
   const toggleTheme = () => {
     const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -89,6 +105,7 @@ function Shell({ user, onLogout }) {
           </nav>
           <div className="sidebar-foot">
             <div className="who"><b>{user.full_name || user.email}</b><span>{title(user.role)}</span></div>
+            <button className="btn ghost small" onClick={() => setPwOpen(true)}>Change password</button>
             <button className="btn ghost small" onClick={onLogout}>Sign out</button>
           </div>
         </aside>
@@ -116,6 +133,7 @@ function Shell({ user, onLogout }) {
                 ? <Card><Empty>No facilities are assigned to your account.</Empty></Card>
                 : <Page key={`${route.id}:${fid}`} />}
           </main>
+          {pwOpen && <ChangePasswordDialog onClose={() => setPwOpen(false)} />}
         </div>
       </div>
     </AppCtx.Provider>
