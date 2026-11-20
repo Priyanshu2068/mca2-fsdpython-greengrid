@@ -2,7 +2,7 @@ import { api } from '../api.js';
 import { useApp } from '../context.js';
 import { useAsync } from '../hooks.js';
 import { kwh, list, nf, num, title } from '../format.js';
-import { Card, Empty, Loader, Stars, Table } from '../components/ui.jsx';
+import { Card, Empty, Loader, Pill, Stars, Table } from '../components/ui.jsx';
 
 function Gauge({ mine, bm }) {
   const lo = num(bm.top_20_percentile_eui), hi = num(bm.bottom_20_percentile_eui);
@@ -59,11 +59,11 @@ export default function Benchmark() {
                 </Card>
               </div>
             ) : <Card><Empty>No benchmark has been computed for this facility yet.</Empty></Card>}
-            <Card head="Facility ranking">
+            <Card head={<>Facility ranking <span className="muted small">· other facilities are shown anonymously</span></>}>
               {R.length ? (
                 <Table
                   cols={[{ h: '#' }, { h: 'Facility' }, { h: 'Type' }, { h: 'EUI', r: 1 }, { h: 'Percentile', r: 1 }, { h: 'Rating' }]}
-                  rows={R.map((r, i) => [i + 1, <b>{r.facility_name}</b>, title(r.facility_type), nf(r.calculated_eui_kwh_sqm_year, 1), nf(r.national_percentile), <Stars n={r.star_rating} />])} />
+                  rows={R.map((r, i) => [i + 1, <><b>{r.facility_name}</b>{r.facility === fid && <> <Pill kind="good">Your facility</Pill></>}</>, title(r.facility_type), nf(r.calculated_eui_kwh_sqm_year, 1), nf(r.national_percentile), <Stars n={r.star_rating} />])} />
               ) : <Empty>No data.</Empty>}
             </Card>
             <Card head={<>BEE benchmark standards <span className="muted small">· kWh/m²/year</span></>}>

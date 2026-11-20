@@ -242,7 +242,7 @@ All dashboard endpoints read exclusively from pre-aggregated rollups and guarant
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/benchmarking/standards/` | Scoped Roles | Indian commercial building EUI benchmarks ($\text{kWh/m}^2/\text{yr}$) |
 | `GET` | `/api/v1/benchmarking/scores/` | Scoped Roles | Historical annual benchmark scores and star ratings |
-| `GET` | `/api/v1/benchmarking/ranking/` | Scoped Roles | Peer ranking percentile within building category |
+| `GET` | `/api/v1/benchmarking/ranking/` | Scoped Roles | Peer ranking percentile within building category. Admins see every facility; other roles see their own facilities in full and all other facilities anonymised (`Peer facility #N`, with name, code, id, floor area and absolute energy removed) so they can compare efficiency without learning who the peers are |
 
 ### `GET /api/v1/benchmarking/scores/?facility_id=1`
 **Response (200 OK):**
