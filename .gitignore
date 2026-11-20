@@ -81,3 +81,6 @@ Thumbs.db
 # Frontend
 node_modules/
 frontend/dist/
+
+# Viva / Private notes
+submission/GreenGrid_Viva_Quick_Reference.pdf
