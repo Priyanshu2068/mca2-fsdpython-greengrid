@@ -18,6 +18,7 @@ class KPISummaryResponseSerializer(serializers.Serializer):
     facility_id = serializers.IntegerField()
     facility_name = serializers.CharField()
     as_of = serializers.DateTimeField()
+    latest_data_at = serializers.DateTimeField(allow_null=True)
     metrics = MetricSummarySerializer()
 
 class TrendPointSerializer(serializers.Serializer):

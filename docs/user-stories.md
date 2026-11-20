@@ -289,3 +289,21 @@
   3. Final sprint review document in `docs/sprint-3-review.md`.
   4. Swagger documentation at `/api/docs/` verified complete with all schemas and response codes.
   5. Release branch `release/v1.0.0` merged into `main`, tagged `v1.0.0`, and pushed to GitHub.
+
+---
+
+## Post-release Enhancements (after `v1.0.0`)
+
+The four phases and their tags are unchanged. The following refinements were added afterwards, each with automated tests and documented in `docs/api-spec.md`.
+
+| ID | Enhancement | Roles | Summary |
+| :--- | :--- | :--- | :--- |
+| **P02-EN01** | Manual bill entry | Admin, Field Engineer | A "+ Record bill" form on the Billing page for emergency or offline entry. The bill is reconciled against metered energy automatically. Engineers can only record bills for their assigned facilities. |
+| **P02-EN02** | Role-specific actions | All | Alerts can be acted on by admins and field engineers; recommendations by admins and customers. Other roles are view-only, enforced in the API and shown in the UI. |
+| **P02-EN03** | User onboarding with facility access | Admin, Field Engineer | A Users page to add users and choose which facilities they can see. Admins create customers and field engineers; engineers create customers for their own facilities. A temporary password is shown once. Access can be edited later and every change is audit-logged. Only admins deactivate users. |
+| **P02-EN04** | Add facility | Admin | A form to add a facility. The code is upper-cased and unique, sizes are validated, and the new facility is audit-logged. |
+| **P02-EN05** | Change password | All | Every user can change their own password from the sidebar. The current password is required, the new one must be at least 8 characters and different, and the session stays signed in. |
+| **P02-EN06** | Anonymous peer ranking | All | Users compare efficiency (EUI, percentile, star rating) with other facilities without learning who they are: non-admin users see them as "Peer facility #N". |
+| **P02-EN07** | Live, responsive dashboards | All | Dashboards, alerts, billing and renewables refresh every 30 seconds with a Live indicator and a refresh-now button. The layout works from phones to desktops, and the Overview explains "No readings yet today" instead of showing a bare zero. |
+| **P02-EN08** | Solar and diesel meter telemetry | System | Solar meters report readings from the PV array and diesel generator meters report during logged outages, so the energy mix shows grid, solar and diesel. Idle solar and generator meters are not reported as silent. The demo seed is idempotent. |
+| **P02-EN09** | Container deployment | DevOps | `docker compose up --build` runs PostgreSQL 16, the Django backend with the compiled React client, and an Nginx reverse proxy. |

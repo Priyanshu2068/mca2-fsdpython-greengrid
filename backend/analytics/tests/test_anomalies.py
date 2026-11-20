@@ -160,3 +160,22 @@ def test_alert_update_is_role_restricted(setup_facility, role, expected):
         assert res.json()['error']['code'] == 'PERMISSION_DENIED'
         alert.refresh_from_db()
         assert alert.status == 'open'
+
+
+@pytest.mark.django_db
+def test_idle_solar_and_diesel_meters_are_not_reported_silent(setup_facility):
+    """Solar sleeps at night and a diesel generator is idle until an outage: neither is an anomaly."""
+    _, fac, incomer, dg = setup_facility
+    solar = Meter.objects.create(
+        facility=fac, meter_identifier='MTR-SOL', name='Rooftop Solar', energy_source='solar', load_category='main_incomer')
+    long_ago = timezone.now() - timedelta(hours=10)
+    for m in (incomer, dg, solar):
+        RawReading.objects.create(
+            meter=m, timestamp=long_ago, energy_kwh=Decimal('1.0000'), active_power_kw=Decimal('4.0000'),
+            power_factor=Decimal('0.950'), voltage_v=Decimal('415.00'))
+
+    alerts = run_anomaly_detection()
+    silent = {a.meter_id for a in alerts if a.anomaly_type == 'meter_silent'}
+    assert incomer.id in silent          # a grid meter that stopped reporting is still flagged
+    assert dg.id not in silent
+    assert solar.id not in silent

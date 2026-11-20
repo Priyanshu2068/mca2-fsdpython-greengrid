@@ -44,6 +44,9 @@ def dashboard_setup(db):
     now = timezone.now()
     today = timezone.localtime(now).date()
     yesterday = today - timedelta(days=1)
+    # UTC hour buckets straddle local midnight (IST is UTC+5:30), so clamp the bucket to local midnight
+    local_midnight = timezone.localtime(now).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_bucket = max(now.replace(minute=0, second=0, microsecond=0), local_midnight)
 
     # Yesterday daily rollup: 1000 kWh
     DailyRollup.objects.create(
@@ -55,7 +58,7 @@ def dashboard_setup(db):
     # Today hourly rollup: 500 kWh, peak 300 kW
     HourlyRollup.objects.create(
         meter=incomer,
-        bucket_start=now.replace(minute=0, second=0, microsecond=0),
+        bucket_start=today_bucket,
         total_energy_kwh=Decimal('500.0000'),
         peak_demand_kw=Decimal('300.0000')
     )
@@ -138,3 +141,20 @@ def test_unassigned_facility_returns_404(dashboard_setup):
     response = client.get(f'/api/v1/dashboard/summary/?facility_id={other_fac.id}')
     assert response.status_code == 404
     assert response.json()['error']['code'] == 'RESOURCE_NOT_FOUND'
+
+
+@pytest.mark.django_db
+def test_dashboard_summary_reports_when_the_newest_data_is_from(dashboard_setup):
+    user, fac = dashboard_setup
+    client = APIClient()
+    client.force_login(user)
+    data = client.get(f'/api/v1/dashboard/summary/?facility_id={fac.id}').json()
+    assert data['latest_data_at'] is not None  # the fixture has hourly rollups
+
+    # a facility with no rollups yet reports null instead of failing
+    from facilities.models import Facility
+    empty = Facility.objects.create(
+        name='Empty Site', code='FAC-EMPTY', facility_type='tech_park', gross_floor_area_sqm=Decimal('1000.00'),
+        address='x', city='x', state='x', pin_code='1')
+    UserFacilityAssignment.objects.create(user=user, facility=empty)
+    assert client.get(f'/api/v1/dashboard/summary/?facility_id={empty.id}').json()['latest_data_at'] is None

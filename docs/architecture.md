@@ -211,6 +211,15 @@ sequenceDiagram
   - `customer`: Strict filtering to facilities owned by their organization.
   - `field_engineer`: Strict filtering to explicitly assigned facilities.
   - Attempts to access unassigned facilities return `HTTP 404 Not Found` rather than `403 Forbidden` to prevent object enumeration.
+- **Role-specific actions (enforced in the API, mirrored in the UI):**
+  - Alerts can be acknowledged or resolved by `admin` and `field_engineer`; `customer` is view-only.
+  - Recommendations can be accepted or dismissed by `admin` and `customer`; `field_engineer` is view-only.
+  - Utility bills can be recorded manually (emergency or offline entry) by `admin` and `field_engineer`; engineers only for their assigned facilities.
+  - Users and facility access: `admin` creates customers and field engineers; `field_engineer` creates customers for their own facilities only. Only `admin` deactivates users or adds facilities.
+  - Peer ranking: a user sees their own facilities in full; every other facility is anonymised as `Peer facility #N` (EUI, percentile and star rating remain for comparison). Admins see everything.
+
+### Deployment View
+The repository ships a production-style container setup (`Dockerfile`, `docker-compose.yml`, `nginx.conf`, `docker-entrypoint.sh`). `docker compose up --build` starts three services: **db** (PostgreSQL 16 with a persistent volume), **web** (Django and DRF serving the compiled React client) and **nginx** (reverse proxy and static files). The same code runs unchanged in local development with `manage.py runserver` and `npm run dev`.
 
 ---
 
