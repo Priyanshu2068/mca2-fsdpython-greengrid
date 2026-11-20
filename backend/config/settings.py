@@ -28,6 +28,18 @@ elif (BASE_DIR / '.env').exists():
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=[
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:80',
+        'http://localhost',
+        'http://127.0.0.1',
+    ]
+)
 
 # Application definition
 INSTALLED_APPS = [

@@ -199,7 +199,29 @@ All foundational engineering documents reside in the `docs/` and `database/` dir
 
 ---
 
-## 6. Local Installation & Setup Guide
+## 6. Installation & Setup Guide
+
+### Option A: One-Command Docker Deployment (Recommended)
+You can run the complete GreenGrid stack (PostgreSQL 16, Django DRF backend, compiled React SPA, and Nginx reverse proxy) in Docker with a single command:
+
+```bash
+docker compose up --build
+```
+This automatically:
+1. Boots PostgreSQL 16 on port `5432` with automated healthchecks.
+2. Builds the React SPA client into optimized production static bundles.
+3. Installs Python 3.11 dependencies with `psycopg3` and Gunicorn.
+4. Runs database migrations and seeds demo data (`seed_demo --days 30`).
+5. Exposes the system at:
+   - **Web Application**: [`http://localhost:8000/app/`](http://localhost:8000/app/) (or port 80 via Nginx: [`http://localhost/app/`](http://localhost/app/))
+   - **Interactive API Docs**: [`http://localhost:8000/api/docs/`](http://localhost:8000/api/docs/)
+   - **Django Admin**: [`http://localhost:8000/admin/`](http://localhost:8000/admin/)
+
+To stop containers: `docker compose down`
+
+---
+
+### Option B: Manual Local Setup
 
 ### Prerequisites
 - Python 3.11 or higher
