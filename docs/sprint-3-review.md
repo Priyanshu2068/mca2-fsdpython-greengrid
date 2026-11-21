@@ -3,7 +3,8 @@
 **Project:** GreenGrid: Smart Energy Management for Tomorrow's Needs (P02)  
 **Milestone Tag:** `v1.0.0` (Production Release)  
 **Phase:** Phase 3 — Intelligence, Renewables & Final System Release (28 Hours)  
-**Author:** Priyanshu  
+**Author:** Priyanshu Tripathi  
+**Roll No:** 2500320140122  
 **Repository:** [https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git](https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git)
 
 ---

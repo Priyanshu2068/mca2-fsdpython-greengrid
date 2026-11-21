@@ -1,6 +1,7 @@
 # GreenGrid: Smart Energy Management for Tomorrow's Needs (P02)
 
-**Author:** Priyanshu  
+**Author:** Priyanshu Tripathi  
+**Roll No:** 2500320140122  
 **Project Type:** Individual Academic Project (90 Hours)  
 **Repository:** [https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git](https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git)
 
@@ -53,15 +54,25 @@ flowchart TB
 ### 3.2 Data Workflow: From Meter Reading to Rupee Saved
 
 ```mermaid
-flowchart LR
-    S1["1. Sources<br/>edge gateways, field CSV,<br/>manual entry, simulator"]
-    S2["2. Ingestion<br/>authenticate, validate (max 5,000),<br/>de-duplicate, persist"]
-    S3["3. Storage<br/>raw_readings<br/>UNIQUE (meter, timestamp)"]
-    S4["4. Scheduled jobs<br/>rollups, anomalies,<br/>benchmarks, recommendations"]
-    S5["5. Intelligence<br/>alerts, bill audit,<br/>EUI star rating, rupee savings"]
-    S6["6. People act<br/>customer, engineer, admin"]
+flowchart TD
+    D_API["Device API\nMeters, DG, solar"]
+    CSV["CSV upload\nExported meter data"]
+    ENG["Field engineer\nManual readings & Simulator"]
 
-    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    D_API & CSV & ENG --> INGEST["Ingestion API\nValidate, dedupe, store readings"]
+    INGEST --> DB[("PostgreSQL 16\nReadings, bills, facilities")]
+
+    BILLS["Utility bills\nEntered monthly"] --> JOBS
+    DB --> JOBS["Scheduled jobs\nRollups, anomalies, scores"]
+
+    JOBS --> DASH["Dashboard\nLive and trends"]
+    JOBS --> ALERTS["Alerts\nSpikes, PF, DG, silent"]
+    JOBS --> BENCH["Benchmarks\nkWh per m² & Star ratings"]
+    JOBS --> RECS["Recommender\nSavings in ₹"]
+    JOBS --> RENEW["Renewables & Carbon\nSolar & tCO₂e offset"]
+
+    DASH & ALERTS & BENCH & RECS & RENEW --> ACT["Customer, Engineer & Admin act\nFix waste, track ₹ savings, resolve alerts"]
+    ACT -.->|"↺ New readings show the impact of each fix"| D_API
 ```
 
 Ingestion is idempotent: sending the same batch twice never double counts, because unique keys and `ignore_conflicts` reject duplicates at the database. Jobs are re-runnable management commands, so there is no message queue to operate.

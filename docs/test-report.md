@@ -3,7 +3,8 @@
 **Project:** GreenGrid: Smart Energy Management for Tomorrow's Needs (P02)  
 **Milestone:** Final Production Release `v1.0.0` plus post-release enhancements  
 **Test Suite Framework:** `pytest` 9.2.0, `pytest-django` 4.14.0, Python 3.13.13, Django 4.2.30 LTS  
-**Author:** Priyanshu  
+**Author:** Priyanshu Tripathi  
+**Roll No:** 2500320140122  
 **Repository:** [https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git](https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git)
 
 ---
