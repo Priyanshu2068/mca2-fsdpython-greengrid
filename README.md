@@ -77,7 +77,45 @@ flowchart TD
 
 Ingestion is idempotent: sending the same batch twice never double counts, because unique keys and `ignore_conflicts` reject duplicates at the database. Jobs are re-runnable management commands, so there is no message queue to operate.
 
-### 3.3 Database Schema: 24 Tables in 8 Domains
+### 3.3 Authentication & Session Lifecycle (CSRF + SessionAuth)
+
+GreenGrid enforces Django's built-in session authentication with strict CSRF protection (no stateless JWTs), ensuring enterprise security across browser sessions:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User (Browser)
+    participant React as React SPA (Vite)
+    participant Django as Django Backend (API)
+    participant DB as PostgreSQL 16 (django_session)
+
+    Note over User,Django: 1. CSRF Token Handshake
+    User->>React: Open Application
+    React->>Django: GET /api/v1/accounts/csrf/
+    Django-->>React: Set-Cookie: csrftoken=abc123xyz (HTTP 200)
+    Note over React: React stores csrftoken for state-changing requests
+
+    Note over User,Django: 2. Login & Session Establishment
+    User->>React: Enter Credentials (Email & Password)
+    React->>Django: POST /api/v1/accounts/login/<br/>Header: X-CSRFToken: abc123xyz<br/>Body: {"email": "...", "password": "..."}
+    Django->>Django: Verify X-CSRFToken & Authenticate Credentials
+    Django->>DB: Create Session row in django_session table
+    Django-->>React: Set-Cookie: sessionid=sess_789 (HttpOnly, Secure)<br/>Response: User Profile & Assigned Facility IDs (HTTP 200)
+
+    Note over User,Django: 3. Authenticated Business API Calls
+    React->>Django: GET /api/v1/dashboard/summary/?facility_id=1<br/>Cookie: sessionid=sess_789
+    Django->>DB: Lookup sessionid -> attach request.user
+    Django->>DB: Fetch Scoped Rollups (<1s query)
+    Django-->>React: Return Facility Dashboard JSON (HTTP 200)
+
+    Note over User,Django: 4. Secure Session Termination
+    User->>React: Click Sign Out
+    React->>Django: POST /api/v1/accounts/logout/<br/>Header: X-CSRFToken: abc123xyz
+    Django->>DB: DELETE FROM django_session WHERE session_key='sess_789'
+    Django-->>React: Clear sessionid Cookie (HTTP 200)
+```
+
+### 3.4 Database Schema: 24 Tables in 8 Domains
 
 | Domain | Tables |
 | :--- | :--- |
