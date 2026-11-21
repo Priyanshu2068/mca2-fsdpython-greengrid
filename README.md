@@ -1,6 +1,7 @@
 # GreenGrid: Smart Energy Management for Tomorrow's Needs (P02)
 
-**Author:** Priyanshu  
+**Author:** Priyanshu Tripathi  
+**Roll No:** 2500320140122  
 **Project Type:** Individual Academic Project (90 Hours)  
 **Repository:** [https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git](https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git)
 

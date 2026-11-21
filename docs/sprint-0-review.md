@@ -3,7 +3,8 @@
 **Project:** GreenGrid: Smart Energy Management for Tomorrow's Needs (P02)  
 **Milestone Tag:** `v0.1.0`  
 **Phase:** Phase 0 — Workflow and Architecture Design (6 Hours)  
-**Author:** Priyanshu  
+**Author:** Priyanshu Tripathi  
+**Roll No:** 2500320140122  
 **Repository:** [https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git](https://github.com/Priyanshu2068/mca2-fsdpython-greengrid.git)
 
 ---
